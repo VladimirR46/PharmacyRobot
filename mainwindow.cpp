@@ -369,8 +369,8 @@ void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
 
 void MainWindow::on_ReadPointButton_clicked()
 {
-    ReadModbusRequest(PA701,2); // Точка 0
-    ReadModbusRequest(PA703,2); // Точка 1
+    ReadModbusRequest(PA701,2); // Точк =  0
+    ReadModbusRequest(PA703,2); // Точка =  1
 }
 
 void MainWindow::on_PowerButton_clicked()
