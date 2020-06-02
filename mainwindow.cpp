@@ -394,7 +394,8 @@ void MainWindow::on_PowerButton_clicked()
 
 void MainWindow::on_SHomeButton_clicked()
 {
-    quint16 init = 0x0001; //!!!!!!!
+    quint16 init = 0x0001; //!!!
+
     SetBit(init,1,1);
     WriteModbusRequest(PA508,init);
     SetBit(init,0,1);
