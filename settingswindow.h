@@ -47,8 +47,8 @@ public:
 
     // Опишем сигналы:
 signals:
-        void  WriteModbusSignal(int RegistrAddres, quint16 value);
-        void  ReadModbusSignal(int RegistrAddres, quint16 size); // Прочитать N регистров
+        void  WriteModbusSignal(int Server, int RegistrAddres, quint16 value);
+        void  ReadModbusSignal(int Server, int RegistrAddres, quint16 size); // Прочитать N регистров
 
 
 private slots:

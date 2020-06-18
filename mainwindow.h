@@ -38,11 +38,13 @@ private:
     void initActions();
     int GetEncoderFeedback(const QModbusDataUnit& unit);
 
-    void WriteModbus(QModbusDataUnit writeUnit);
+    void WriteModbus(int Serves, QModbusDataUnit writeUnit);
     void SetBit(quint16 &value, quint8 bit, quint8 index);
     void ProcessPA508(int ServoAddres, quint16 value);
     void ProcessPA509(int ServoAddres, quint16 value);
     void isHOME(int ServoAddres, quint16 value);
+
+    QVector<Servoline>::iterator FindServo(int ServoAddres); // Поиск обьекта сервы по адресу в массиве
 
 
 private slots:
@@ -50,9 +52,9 @@ private slots:
 
     void Update_dP13();
 
-    void  WriteModbusRequest(int RegistrAddres, quint16 value);
-    void  WriteIntModbusRequest(int RegistrAddres, qint32 value);
-    void  ReadModbusRequest(int RegistrAddres, quint16 size); // Прочитать N регистров
+    void  WriteModbusRequest(int Server, int RegistrAddres, quint16 value);
+    void  WriteIntModbusRequest(int Server, int RegistrAddres, qint32 value);
+    void  ReadModbusRequest(int Server, int RegistrAddres, quint16 size); // Прочитать N регистров
 
     void onStateChanged(int state);
     void readReady();

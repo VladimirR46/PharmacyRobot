@@ -11,7 +11,9 @@ public:
     Servoline(QString name_, int address_);
     ~Servoline();
 
-    int ServoAddres = 1;
+    int ServoAddres = 0;
+    bool isPower = false;
+    bool isHome = false;
 
     QString GetName();
 

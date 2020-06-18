@@ -191,7 +191,7 @@ void SettingsWindow::on_ButtonReadAll_clicked()
     for (int i = 0;it!=RegistrEditList.end();++it,i++)
     {
         int Addres = *it;
-        emit ReadModbusSignal(Addres,1);
-
+        emit ReadModbusSignal(1, Addres,1);
+        emit ReadModbusSignal(2, Addres,1);
     }  
 }

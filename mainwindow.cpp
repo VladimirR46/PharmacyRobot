@@ -69,17 +69,22 @@ void MainWindow::ServoInitialization()
 // Реализация слота
 void MainWindow::JOGSlot(int id, int state)
 {
+    /*
     if(id == 0) WriteModbusRequest(2304,quint16(state));
     if(id == 1) WriteModbusRequest(2305,quint16(state));
     if(id == 2) WriteModbusRequest(2306,quint16(state));
     if(id == 3) ReadModbusRequest(PA306,1);
-
+    */
     statusBar()->showMessage(tr("JOG"), 2000);
 }
 
 void MainWindow::Update_dP13()
 {
-    ReadModbusRequest(dP13,1);
+    QVector<Servoline>::iterator iter= servo_array.begin();
+    for (;iter!=servo_array.end();++iter)
+    {
+        ReadModbusRequest(iter->ServoAddres, dP13,1);
+    }
 }
 // Слот состояния подключения
 void MainWindow::onStateChanged(int state)
@@ -135,8 +140,11 @@ void MainWindow::ConnectToPort()
 }
 //------------------------------------------------------------------------------------------------------------
 
-void MainWindow::ReadModbusRequest(int RegistrAddres, quint16 size)
+void MainWindow::ReadModbusRequest(int Server, int RegistrAddres, quint16 size)
 {
+    if(Server == 1 && !ui->checkAxisX->isChecked()) return;
+    if(Server == 2 && !ui->checkAxisY->isChecked()) return;
+
     if (!modbusDevice)
         return;
 
@@ -144,7 +152,7 @@ void MainWindow::ReadModbusRequest(int RegistrAddres, quint16 size)
 
     QModbusDataUnit readUnit(QModbusDataUnit::HoldingRegisters, RegistrAddres, size);
 
-    if (auto *reply = modbusDevice->sendReadRequest(readUnit, 1))
+    if (auto *reply = modbusDevice->sendReadRequest(readUnit, Server))
     {
         if (!reply->isFinished())
             connect(reply, &QModbusReply::finished, this, &MainWindow::readReady);
@@ -192,12 +200,26 @@ void GetBit(quint8 DI[], quint16 value)
 }
 
 //-----------------------------------------------------------------------------------------------------------------------
+QVector<Servoline>::iterator MainWindow::FindServo(int ServoAddres)
+{
+    QVector<Servoline>::iterator iter= servo_array.begin();
+    for (;iter!=servo_array.end();++iter)
+    {
+        if(iter->ServoAddres == ServoAddres) return iter;
+    }
+
+    return iter;
+}
+//---------------------------------------------------------------------------------
 void MainWindow::ProcessPA508(int ServoAddres, quint16 value)
 {
     quint8 DI[4];
     GetBit(DI,value);
 
-    if(DI[0] == 1) // Питание включено
+    FindServo(ServoAddres)->isPower = bool(DI[0]);
+
+    if((FindServo(1)->isPower || !ui->checkAxisX->isChecked()) &&
+            (FindServo(2)->isPower || !ui->checkAxisY->isChecked())) // Питание включено
     {
         ui->PowerButton->setText("Отключить");
         ui->PowerButton->setIcon(QIcon(":/images/powerOff.png"));
@@ -213,18 +235,20 @@ void MainWindow::ProcessPA509(int ServoAddres, quint16 value)
 {
 
 }
-
+//----------------------------------------------------------------------
 void MainWindow::isHOME(int ServoAddres, quint16 value)
 {
-    if(value == 0xb)
+    if(value == 0xb) FindServo(ServoAddres)->isHome = true;
+    else FindServo(ServoAddres)->isHome = false;
+
+    if((FindServo(1)->isHome || !ui->checkAxisX->isChecked()) &&
+            (FindServo(2)->isHome || !ui->checkAxisY->isChecked()))
     {
         ui->SHomeButton->setEnabled(true);
         timerIsHome->stop();
     }
 }
-
-//
-
+//----------------------------------------------------------------------
 void MainWindow::readReady()
 {
     auto reply = qobject_cast<QModbusReply *>(sender());
@@ -283,7 +307,7 @@ void MainWindow::readReady()
 
 }
 //--------------------------------------------------------------------------------------------------------------
-void  MainWindow::WriteIntModbusRequest(int RegistrAddres, qint32 value)
+void  MainWindow::WriteIntModbusRequest(int Server, int RegistrAddres, qint32 value)
 {
     if (!modbusDevice)
         return;
@@ -299,11 +323,14 @@ void  MainWindow::WriteIntModbusRequest(int RegistrAddres, qint32 value)
     writeUnit.setValue(0,loWord);
     writeUnit.setValue(1,hiWord);
 
-    WriteModbus(writeUnit);
+    WriteModbus(Server, writeUnit);
 }
 //---------------------------------------------------------------------------------------------------------------
-void  MainWindow::WriteModbusRequest(int RegistrAddres, quint16 value)
+void  MainWindow::WriteModbusRequest(int Server, int RegistrAddres, quint16 value)
 {
+    if(Server == 1 && !ui->checkAxisX->isChecked()) return;
+    if(Server == 2 && !ui->checkAxisY->isChecked()) return;
+
     if (!modbusDevice)
         return;
     statusBar()->clearMessage();
@@ -314,13 +341,13 @@ void  MainWindow::WriteModbusRequest(int RegistrAddres, quint16 value)
 
     writeUnit.setValue(0,value);
 
-    WriteModbus(writeUnit);
+    WriteModbus(Server, writeUnit);
 }
 //--------------------------------------------------------------------------------------------------------------
-void  MainWindow::WriteModbus(QModbusDataUnit writeUnit)
+void  MainWindow::WriteModbus(int Server, QModbusDataUnit writeUnit)
 {
 
-    if (auto *reply = modbusDevice->sendWriteRequest(writeUnit, 1))
+    if (auto *reply = modbusDevice->sendWriteRequest(writeUnit, Server))
     {
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, [this, reply]() {
@@ -348,7 +375,7 @@ void  MainWindow::WriteModbus(QModbusDataUnit writeUnit)
 
 void MainWindow::on_UpdateCurPosButton_clicked()
 {
-    ReadModbusRequest(dP01,2);
+    ReadModbusRequest(1, dP01,2);
 }
 
 void MainWindow::on_checkUpdatePos_stateChanged(int arg1)
@@ -369,37 +396,50 @@ void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
 
 void MainWindow::on_ReadPointButton_clicked()
 {
-    ReadModbusRequest(PA701,2); // Точк =  0
-    ReadModbusRequest(PA703,2); // Точка =  1
+    ReadModbusRequest(1, PA701,2); // Точк =  0
+    ReadModbusRequest(1, PA703,2); // Точка =  1
 }
 
 void MainWindow::on_PowerButton_clicked()
 {
     quint16 pwr = 0x0000;
+
     if(ui->PowerButton->text() == "Включить")
     {
         SetBit(pwr,1,0);
-        WriteModbusRequest(PA508,pwr);
-        ReadModbusRequest(PA508,1);
+        QVector<Servoline>::iterator iter= servo_array.begin();
+        for (;iter!=servo_array.end();++iter)
+        {
+            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
+            ReadModbusRequest(iter->ServoAddres, PA508,1);
+        }
     }
     else
     {
         SetBit(pwr,0,0);
-        WriteModbusRequest(PA508,pwr);
-        ReadModbusRequest(PA508,1);
+        QVector<Servoline>::iterator iter= servo_array.begin();
+        for (;iter!=servo_array.end();++iter)
+        {
+            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
+            ReadModbusRequest(iter->ServoAddres, PA508,1);
+        }
     }
-
-
 }
 
 void MainWindow::on_SHomeButton_clicked()
 {
     quint16 init = 0x0001; //!!!
 
-    SetBit(init,1,1);
-    WriteModbusRequest(PA508,init);
-    SetBit(init,0,1);
-    WriteModbusRequest(PA508,init);
+    QVector<Servoline>::iterator iter= servo_array.begin();
+    for (;iter!=servo_array.end();++iter)
+    {
+        SetBit(init,1,1);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+        SetBit(init,0,1);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+    }
+
+
     ui->SHomeButton->setEnabled(false);
     timerIsHome->start(200);
 }
@@ -407,22 +447,22 @@ void MainWindow::on_SHomeButton_clicked()
 void MainWindow::on_SetPoint0Button_clicked()
 {
      int point = ui->Point0Edit->text().toInt();
-     WriteIntModbusRequest(PA701,point);
+     WriteIntModbusRequest(1, PA701,point);
 }
 
 void MainWindow::on_SetPoint1Button_clicked()
 {
     int point = ui->Point1Edit->text().toInt();
-    WriteIntModbusRequest(PA703,point);
+    WriteIntModbusRequest(1, PA703,point);
 }
 
 void MainWindow::on_MoveP0Button_clicked()
 {
     quint16 init = 0x0001; // !!!!  0x0001
     SetBit(init,1,2);
-    WriteModbusRequest(PA508,init);
+    WriteModbusRequest(1, PA508,init);
     SetBit(init,0,2);
-    WriteModbusRequest(PA508,init);
+    WriteModbusRequest(1, PA508,init);
 }
 
 void MainWindow::on_PauseButton_toggled(bool checked)
@@ -431,11 +471,11 @@ void MainWindow::on_PauseButton_toggled(bool checked)
     if(checked)
     {
         SetBit(init,1,3);
-        WriteModbusRequest(PA508,init);
+        //WriteModbusRequest(PA508,init);
     }
     else
     {
         SetBit(init,0,3);
-        WriteModbusRequest(PA508,init);
+        //WriteModbusRequest(PA508,init);
     }
 }

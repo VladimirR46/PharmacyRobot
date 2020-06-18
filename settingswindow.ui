@@ -295,6 +295,9 @@
                   <property name="prefix">
                    <string>COM:</string>
                   </property>
+                  <property name="value">
+                   <number>10</number>
+                  </property>
                  </widget>
                 </item>
                </layout>
