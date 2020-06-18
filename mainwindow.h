@@ -77,6 +77,8 @@ private slots:
 
     void on_PauseButton_toggled(bool checked);
 
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 

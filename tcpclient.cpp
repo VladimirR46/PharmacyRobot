@@ -44,6 +44,32 @@ void TcpClient::jsonReceived(const QJsonObject &docObj)
     qDebug() << QString::fromUtf8(jsonData);
 }
 //---------------------------------------------------------------------------------------------------
+void TcpClient::SendServerResponse()
+{
+    QJsonObject message;
+
+    int count = 3;
+    QVector<int> array;
+
+    for (int i = 0; i < count; i++)
+    {
+       array.push_back(i+2);
+    }
+
+    //huguuyjhbjhjhgv
+
+    for (int i = 0; i < array.count(); i++)
+    {
+        message[QString::number(array[i])] = "1234";
+    }
+
+    const QByteArray jsonData = QJsonDocument(message).toJson(QJsonDocument::Compact);
+    QDataStream socketStream(socket);
+    socketStream.setVersion(QDataStream::Qt_5_7);
+    socketStream << jsonData;
+
+}
+//---------------------------------------------------------------------------------------------------
 void TcpClient::slotReadyRead()
 {
     qDebug() << "Reading...";

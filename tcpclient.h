@@ -17,6 +17,7 @@ public:
     explicit TcpClient(QWidget *parent = nullptr);
 
     void Connect(const QString& strHost, int nPort);
+    void SendServerResponse();
 
 
 signals:

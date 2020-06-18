@@ -491,3 +491,8 @@ void MainWindow::on_PauseButton_toggled(bool checked)
         //WriteModbusRequest(PA508,init);
     }
 }
+
+void MainWindow::on_pushButton_clicked()
+{
+    p_TcpClient->SendServerResponse();
+}
