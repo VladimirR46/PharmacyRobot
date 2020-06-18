@@ -37,6 +37,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
         m_settings.numberOfRetries = ui->retriesSpinner->value();
         m_settings.Port = ui->portSpinner->value();
 
+        m_settings.TcpIP = ui->IPEdit->text();
+        m_settings.TcpPort = ui->PortSpinner->value();
+
         hide();
     });
 

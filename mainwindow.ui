@@ -322,6 +322,7 @@
     <addaction name="actionConnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
+    <addaction name="actionConnectTCP"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menu_2">
@@ -399,6 +400,11 @@
    </property>
    <property name="text">
     <string>JOG</string>
+   </property>
+  </action>
+  <action name="actionConnectTCP">
+   <property name="text">
+    <string>Подключить &quot;ИнфоАптека&quot;</string>
    </property>
   </action>
  </widget>

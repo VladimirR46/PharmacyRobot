@@ -52,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timerIsHome, SIGNAL(timeout()), this, SLOT(Update_dP13()));
 
 
+    p_TcpClient = new TcpClient(); // Создаем TCP client
+
 }
 //-------------------------------------------------------------------------------------------------------------
 void MainWindow::ServoInitialization()
@@ -101,10 +103,16 @@ MainWindow::~MainWindow()
         modbusDevice->disconnectDevice();
     delete modbusDevice;
 
+    delete p_TcpClient;
+
     delete ui;
 }
 //------------------------------------------------------------------------------------------------------------
-
+void MainWindow::ConnectToTCP()
+{
+    p_TcpClient->Connect(m_settingsWindow->settings().TcpIP, m_settingsWindow->settings().TcpPort);
+}
+//------------------------------------------------------------------------------------------------------------
 void MainWindow::ConnectToPort()
 {
     if (!modbusDevice)
@@ -174,6 +182,10 @@ void MainWindow::initActions()
             this, &MainWindow::ConnectToPort);
     connect(ui->actionDisconnect, &QAction::triggered,
             this, &MainWindow::ConnectToPort);
+
+
+    connect(ui->actionConnectTCP, &QAction::triggered,
+            this, &MainWindow::ConnectToTCP);
 
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
     connect(ui->actionSettings, &QAction::triggered, m_settingsWindow, &QDialog::show);

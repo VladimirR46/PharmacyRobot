@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QModbusDataUnit>
 #include "servoline.h"
+#include "tcpclient.h"
 #include <QTimer>
 #include <QTime>
 
@@ -59,6 +60,7 @@ private slots:
     void onStateChanged(int state);
     void readReady();
     void ConnectToPort();
+    void ConnectToTCP();
 
     void ServoInitialization();
     void on_UpdateCurPosButton_clicked();
@@ -88,6 +90,8 @@ private:
 
     QTimer *timerUpdatePos;
     QTimer *timerIsHome;
+
+    TcpClient* p_TcpClient;
 
 
 };

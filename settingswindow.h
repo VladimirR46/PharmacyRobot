@@ -30,7 +30,10 @@ public:
 #endif
         int responseTime = 1000;
         int numberOfRetries = 3;
-        int Port = 1;
+        int Port = 10;
+
+        QString TcpIP = "127.0.0.1";
+        int TcpPort = 4442;
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();

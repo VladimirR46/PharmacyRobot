@@ -1,6 +1,6 @@
 
 QT += serialbus
-
+QT += core network
 # QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -26,14 +26,16 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     servoline.cpp \
-    settingswindow.cpp
+    settingswindow.cpp \
+    tcpclient.cpp
 
 HEADERS += \
     ServoRegisters.h \
     jogwindow.h \
     mainwindow.h \
     servoline.h \
-    settingswindow.h
+    settingswindow.h \
+    tcpclient.h
 
 FORMS += \
     jogwindow.ui \

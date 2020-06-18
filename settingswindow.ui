@@ -65,6 +65,15 @@
           <normaloff>:/images/settings.png</normaloff>:/images/settings.png</iconset>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>TCP (ИнфоАптека)</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resource.qrc">
+          <normaloff>:/images/blue-internet-icon.png</normaloff>:/images/blue-internet-icon.png</iconset>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="0" column="1">
@@ -373,6 +382,51 @@
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QWidget" name="page_3">
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>11</y>
+           <width>165</width>
+           <height>48</height>
+          </rect>
+         </property>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>IP:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="IPEdit">
+            <property name="text">
+             <string>127.0.0.1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Port:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="PortSpinner">
+            <property name="maximum">
+             <number>9999</number>
+            </property>
+            <property name="value">
+             <number>4442</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
      </item>
