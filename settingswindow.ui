@@ -25,7 +25,21 @@
      <property name="horizontalSpacing">
       <number>6</number>
      </property>
-     <item row="0" column="0" rowspan="2">
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_8">
+       <property name="font">
+        <font>
+         <pointsize>11</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" rowspan="3">
       <widget class="QListWidget" name="SettingsList">
        <property name="enabled">
         <bool>true</bool>
@@ -74,20 +88,11 @@
           <normaloff>:/images/blue-internet-icon.png</normaloff>:/images/blue-internet-icon.png</iconset>
         </property>
        </item>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="label_8">
-       <property name="font">
-        <font>
-         <pointsize>11</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
+       <item>
+        <property name="text">
+         <string>Настройки шкафов</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="1">
@@ -96,7 +101,7 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -427,6 +432,58 @@
           </item>
          </layout>
         </widget>
+       </widget>
+       <widget class="QWidget" name="page_4">
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_11">
+             <property name="text">
+              <string>Количество строк в шкафу:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="spinCupboard">
+             <property name="maximum">
+              <number>999</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="ButtonAddCupboard">
+             <property name="text">
+              <string>Добавить шкаф</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>PushButton</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="1" column="0">
+          <widget class="QTabWidget" name="tabCupboard"/>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>

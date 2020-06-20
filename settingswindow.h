@@ -12,6 +12,15 @@
 
 #include "servoline.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
+
+#include <QFileDialog>
+#include <QFile>
+#include <QDir>
+
 namespace Ui {
 class SettingsWindow;
 }
@@ -47,6 +56,8 @@ public:
 
     Settings settings() const;
 
+    void LoadDatabase();
+
 
     // Опишем сигналы:
 signals:
@@ -57,6 +68,13 @@ signals:
 private slots:
     void on_ButtonReadAll_clicked();
 
+    void Click(int col,int row);
+    void ClickCupboard(int col,int row);
+
+
+    void on_ButtonAddCupboard_clicked();
+
+    void on_pushButton_clicked();
 
 private:
     Settings m_settings;
@@ -65,6 +83,10 @@ private:
     QTableWidget *tableWidget;
 
     QVector<Servoline>* servo_array;
+
+    QJsonObject db;
+
+    QTableWidget* tableCupboard[5];
 };
 
 #endif // SETTINGSWINDOW_H
