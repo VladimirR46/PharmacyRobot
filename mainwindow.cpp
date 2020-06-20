@@ -52,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timerIsHome, SIGNAL(timeout()), this, SLOT(Update_dP13()));
 
 
+    p_TcpClient = new TcpClient(); // Создаем TCP client
+
 }
 //-------------------------------------------------------------------------------------------------------------
 void MainWindow::ServoInitialization()
@@ -77,7 +79,7 @@ void MainWindow::JOGSlot(int id, int state)
     */
     statusBar()->showMessage(tr("JOG"), 2000);
 }
-
+//---------------------------------------------------------------------------------------
 void MainWindow::Update_dP13()
 {
     QVector<Servoline>::iterator iter= servo_array.begin();
@@ -101,10 +103,16 @@ MainWindow::~MainWindow()
         modbusDevice->disconnectDevice();
     delete modbusDevice;
 
+    delete p_TcpClient;
+
     delete ui;
 }
 //------------------------------------------------------------------------------------------------------------
-
+void MainWindow::ConnectToTCP()
+{
+    p_TcpClient->Connect(m_settingsWindow->settings().TcpIP, m_settingsWindow->settings().TcpPort);
+}
+//------------------------------------------------------------------------------------------------------------
 void MainWindow::ConnectToPort()
 {
     if (!modbusDevice)
@@ -174,6 +182,10 @@ void MainWindow::initActions()
             this, &MainWindow::ConnectToPort);
     connect(ui->actionDisconnect, &QAction::triggered,
             this, &MainWindow::ConnectToPort);
+
+
+    connect(ui->actionConnectTCP, &QAction::triggered,
+            this, &MainWindow::ConnectToTCP);
 
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
     connect(ui->actionSettings, &QAction::triggered, m_settingsWindow, &QDialog::show);
@@ -478,4 +490,9 @@ void MainWindow::on_PauseButton_toggled(bool checked)
         SetBit(init,0,3);
         //WriteModbusRequest(PA508,init);
     }
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    p_TcpClient->SendServerResponse();
 }

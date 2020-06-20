@@ -305,6 +305,19 @@
      </size>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>14</x>
+      <y>210</y>
+      <width>171</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Отправить ответ серверу</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -322,6 +335,7 @@
     <addaction name="actionConnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
+    <addaction name="actionConnectTCP"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menu_2">
@@ -399,6 +413,11 @@
    </property>
    <property name="text">
     <string>JOG</string>
+   </property>
+  </action>
+  <action name="actionConnectTCP">
+   <property name="text">
+    <string>Подключить &quot;ИнфоАптека&quot;</string>
    </property>
   </action>
  </widget>

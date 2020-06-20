@@ -13,5 +13,6 @@
         <file>images/ok.png</file>
         <file>images/save.png</file>
         <file>images/pauza.png</file>
+        <file>images/blue-internet-icon.png</file>
     </qresource>
 </RCC>
