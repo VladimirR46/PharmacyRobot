@@ -4,11 +4,17 @@
 #include "QHeaderView"
 #include<QMessageBox>
 
+
+
 SettingsWindow::SettingsWindow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsWindow)
 {
     ui->setupUi(this);
+
+    m_cellSettingsWindow =  new CellSettingsWindow();
+
+    connect(m_cellSettingsWindow, &CellSettingsWindow::SaveCellConfig, this, &SettingsWindow::SaveCellConfigSlot);
 
     connect(ui->SettingsList,SIGNAL(currentRowChanged(int)),ui->stackedSettings,SLOT(setCurrentIndex(int)));
     connect(ui->SettingsList,SIGNAL(currentTextChanged(QString)),ui->label_8,SLOT(setText(QString)));
@@ -64,6 +70,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
 
 SettingsWindow::~SettingsWindow()
 {
+    delete m_cellSettingsWindow;
     delete ui;
 }
 //-------------------------------------------------------------------------------------------------------------------
@@ -128,9 +135,7 @@ void SettingsWindow::DisplayRegistr(int ServoAddres, int addres, quint16 value)
 
 
 }
-
-
-
+//-----------------------------------------------------------------------------------------------------------
 void SettingsWindow::initServo(QVector<Servoline>* servo_ptr)
 {
     servo_array = servo_ptr;
@@ -184,6 +189,30 @@ void SettingsWindow::initServo(QVector<Servoline>* servo_ptr)
     }
 }
 //-------------------------------------------------------------------------------------------------------------------
+void SettingsWindow::SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, int cell_)
+{
+    // Добавить в базу данных
+    QJsonArray boxes = db["modules"].toArray(); // Массив шкафов
+    QJsonArray Lines = boxes[box_].toArray();
+    QJsonArray Cells = Lines[line_].toArray();
+    Cells[cell_] = obj;
+
+    // Сохраняем
+    Lines[line_] = Cells;
+    boxes[box_] = Lines;
+    db["modules"] = boxes;
+
+    //цвет
+    QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box_]->cellWidget(line_,1));
+    if(tw && obj["Count"].toInt() > 0)
+    {
+        tw->item(0,cell_)->setTextAlignment(Qt::AlignCenter);
+        tw->item(0,cell_)->setText(QString::number(obj["Count"].toInt()));
+        tw->item(0,cell_)->setBackground(Qt::green);
+    }
+
+}
+//-------------------------------------------------------------------------------------------------------------------
 SettingsWindow::Settings SettingsWindow::settings() const
 {
     return m_settings;
@@ -199,78 +228,19 @@ void SettingsWindow::on_ButtonReadAll_clicked()
         emit ReadModbusSignal(2, Addres,1);
     }  
 }
-
+//--------------------------------------------------------------------------------------------------
 void SettingsWindow::Click(int row,int col)
 {
     int index = ui->tabCupboard->currentIndex();
     int rows = tableCupboard[index]->currentRow();
-    QMessageBox::information(0, "Information", QString::number(tableCupboard[index]->currentRow()) + " " + QString::number(col));
+    //QMessageBox::information(0, "Information", QString::number(tableCupboard[index]->currentRow()) + " " + QString::number(col));
+
+    // Добавить в базу данных
+    m_cellSettingsWindow->ShowSettings(db, index, tableCupboard[index]->currentRow(), col);
+
 }
-
-void SettingsWindow::ClickCupboard(int row,int col)
-{
-    // Кнопка добавить
-    if(col == 0)
-    {
-        int index = ui->tabCupboard->currentIndex();
-        //QMessageBox::information(0, "Information", QString::number(row) + " " + QString::number(col));
-        QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[index]->cellWidget(row,1));
-        if(!tw)
-        {
-            tw = new QTableWidget();
-            tw->setRowCount(1);
-            //tw->horizontalHeader()->hide();
-            tw->verticalHeader()->hide();
-            connect(tw, SIGNAL(cellClicked(int,int)), this, SLOT(Click(int,int)));
-        }
-
-        tw->setColumnCount(tw->columnCount()+1);
-        //tw->setRowHeight(0,50);
-        tw->setColumnWidth(tw->columnCount()-1,20);
-
-        if(tw->columnCount() > 1)
-            if(tableCupboard[index]->columnWidth(1) < tw->columnCount()*40 ) tableCupboard[index]->setColumnWidth(1,tw->columnCount()*40);
-        tableCupboard[index]->setCellWidget(row,1,tw);
-
-
-        // Добавить в базу данных
-        QJsonArray modules = db["modules"].toArray();
-        QJsonArray Line = modules[index].toArray();
-
-        QJsonArray Cells;
-
-        QJsonObject obj;
-        obj["Name"] = "Цитрамон";
-        Cells.append(obj);
-
-        // Сохраняем
-        Line[row] = Cells;
-        modules[index] = Line;
-        db["modules"] = modules;
-
-
-            // С помощью диалогового окна получаем имя файла с абсолютным путём
-                QString saveFileName = QFileDialog::getSaveFileName(this,
-                                                                    tr("Save Json File"),
-                                                                    QString(),
-                                                                    tr("JSON (*.json)"));
-                QFileInfo fileInfo(saveFileName);   // С помощью QFileInfo
-                QDir::setCurrent(fileInfo.path());  // установим текущую рабочую директорию, где будет файл, иначе может не заработать
-                // Создаём объект файла и открываем его на запись
-                QFile jsonFile(saveFileName);
-                if (!jsonFile.open(QIODevice::WriteOnly))
-                {
-                    return;
-                }
-
-                // Записываем текущий объект Json в файл
-                jsonFile.write(QJsonDocument(db).toJson(QJsonDocument::Indented));
-                jsonFile.close();   // Закрываем файл
-
-
-    }
-}
-void SettingsWindow::LoadDatabase()
+//--------------------------------------------------------------------------------------------------
+void SettingsWindow::LoadDBFromFile()
 {
     // Выбираем файл
     QString openFileName = QFileDialog::getOpenFileName(this,
@@ -292,8 +262,85 @@ void SettingsWindow::LoadDatabase()
     QJsonDocument jsonDocument(QJsonDocument::fromJson(saveData));
     // Из которого выделяем объект в текущий рабочий QJsonObject
     db = jsonDocument.object();
+}
+//--------------------------------------------------------------------------------------------------
+void SettingsWindow::SaveDBFromFile()
+{
+    // С помощью диалогового окна получаем имя файла с абсолютным путём
+    QString saveFileName = QFileDialog::getSaveFileName(this,
+                                                        tr("Save Json File"),
+                                                        QString(),
+                                                        tr("JSON (*.json)"));
+    QFileInfo fileInfo(saveFileName);   // С помощью QFileInfo
+    QDir::setCurrent(fileInfo.path());  // установим текущую рабочую директорию, где будет файл, иначе может не заработать
+    // Создаём объект файла и открываем его на запись
+    QFile jsonFile(saveFileName);
+    if (!jsonFile.open(QIODevice::WriteOnly))
+    {
+        return;
+    }
+
+    // Записываем текущий объект Json в файл
+    jsonFile.write(QJsonDocument(db).toJson(QJsonDocument::Indented));
+    jsonFile.close();   // Закрываем файл
+}
+//--------------------------------------------------------------------------------------------------
+void SettingsWindow::ClickCupboard(int row,int col)
+{
+    // Кнопка добавить
+    if(col == 0)
+    {
+        int index = ui->tabCupboard->currentIndex();
+        //QMessageBox::information(0, "Information", QString::number(row) + " " + QString::number(col));
+        QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[index]->cellWidget(row,1));
+        if(!tw)
+        {
+            tw = new QTableWidget();
+            tw->setRowCount(1);
+            //tw->horizontalHeader()->hide();
+            tw->verticalHeader()->hide();
+            connect(tw, SIGNAL(cellClicked(int,int)), this, SLOT(Click(int,int)));
+        }
+        tw->setSelectionMode(QAbstractItemView::NoSelection);
+        tw->setEditTriggers(0);
+        tw->setColumnCount(tw->columnCount()+1);
+        //tw->setRowHeight(0,50);
+
+        //цвет
+        tw->setItem(0,tw->columnCount()-1, new QTableWidgetItem);
+        tw->item(0,tw->columnCount()-1)->setBackground(Qt::blue);
+
+        tw->setColumnWidth(tw->columnCount()-1,20);
+
+        if(tw->columnCount() > 1)
+            if(tableCupboard[index]->columnWidth(1) < tw->columnCount()*40 ) tableCupboard[index]->setColumnWidth(1,tw->columnCount()*40);
+        tableCupboard[index]->setCellWidget(row,1,tw);
 
 
+        // Добавить в базу данных
+        QJsonArray modules = db["modules"].toArray();
+        QJsonArray Line = modules[index].toArray();
+
+        QJsonArray Cells = Line[row].toArray();
+
+        QJsonObject obj;
+        obj["Name"] = "Цитрамон";
+        obj["ProductCode"] = 0;
+        obj["Count"] = 0;
+        obj["X"] = 0;
+        obj["Y"] = 0;
+        Cells.append(obj);
+
+        // Сохраняем
+        Line[row] = Cells;
+        modules[index] = Line;
+        db["modules"] = modules;
+
+    }
+}
+void SettingsWindow::LoadDatabase()
+{
+    ui->tabCupboard->clear();
     for(int i = 0; i < db["modules"].toArray().count(); i++)
     {
         tableCupboard[i] = new QTableWidget();
@@ -326,20 +373,38 @@ void SettingsWindow::LoadDatabase()
             tableCupboard[i]->setRowHeight(j,57);
             tableCupboard[i]->setItem(j,0,item);
 
-
-            for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
+            // Есть ли ячейки в строке
+            if(db["modules"].toArray()[i].toArray()[j].toArray().count() > 0)
             {
                 QTableWidget* tw = new QTableWidget();
                 tw->setRowCount(1);
                 tw->verticalHeader()->hide();
                 connect(tw, SIGNAL(cellClicked(int,int)), this, SLOT(Click(int,int)));
+                // Загружаем ячейки
+                for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
+                {
+                    tw->setColumnCount(k+1);
+                    tw->setColumnWidth(k,20);
 
-                tw->setColumnCount(k+1);
-                //tw->setRowHeight(0,50);
-                tw->setColumnWidth(k,20);
+                    //цвет
+                    tw->setItem(0,k, new QTableWidgetItem);
+                    int count = db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject()["Count"].toInt();
+                    if(count > 0)
+                    {
+                        tw->item(0,k)->setTextAlignment(Qt::AlignCenter);
+                        tw->item(0,k)->setText(QString::number(count));
+                        tw->item(0,k)->setBackground(Qt::green);
+                    }
+                    else
+                    {
+                       tw->item(0,k)->setBackground(Qt::darkGreen);
+                    }
 
-                if(tw->columnCount() > 1)
-                    if(tableCupboard[i]->columnWidth(1) < tw->columnCount()*40 ) tableCupboard[i]->setColumnWidth(1,tw->columnCount()*40);
+                    if(tw->columnCount() > 1)
+                        if(tableCupboard[i]->columnWidth(1) < tw->columnCount()*40 )
+                            tableCupboard[i]->setColumnWidth(1,tw->columnCount()*40);
+
+                }
                 tableCupboard[i]->setCellWidget(j,1,tw);
             }
         }
@@ -390,8 +455,6 @@ void SettingsWindow::on_ButtonAddCupboard_clicked()
     tableCupboard[index]->setColumnWidth(0,60);
     ui->tabCupboard->addTab(tableCupboard[index],"Шкаф " + QString::number(index+1));
 
-
-
     // Добавляем шкаф в базу данных
     QJsonArray modules = db["modules"].toArray();
 
@@ -406,28 +469,16 @@ void SettingsWindow::on_ButtonAddCupboard_clicked()
 
 
     db["modules"] = modules;
-/*
-    // С помощью диалогового окна получаем имя файла с абсолютным путём
-        QString saveFileName = QFileDialog::getSaveFileName(this,
-                                                            tr("Save Json File"),
-                                                            QString(),
-                                                            tr("JSON (*.json)"));
-        QFileInfo fileInfo(saveFileName);   // С помощью QFileInfo
-        QDir::setCurrent(fileInfo.path());  // установим текущую рабочую директорию, где будет файл, иначе может не заработать
-        // Создаём объект файла и открываем его на запись
-        QFile jsonFile(saveFileName);
-        if (!jsonFile.open(QIODevice::WriteOnly))
-        {
-            return;
-        }
 
-        // Записываем текущий объект Json в файл
-        jsonFile.write(QJsonDocument(db).toJson(QJsonDocument::Indented));
-        jsonFile.close();   // Закрываем файл
-        */
 }
 
 void SettingsWindow::on_pushButton_clicked()
 {
+    LoadDBFromFile();
     LoadDatabase();
+}
+
+void SettingsWindow::on_pushButton_2_clicked()
+{
+    SaveDBFromFile();
 }

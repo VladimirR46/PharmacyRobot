@@ -338,13 +338,6 @@
     <addaction name="actionConnectTCP"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
-    <property name="title">
-     <string>Справка</string>
-    </property>
-    <addaction name="action"/>
-    <addaction name="action_2"/>
-   </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
      <string>Инструменты</string>
@@ -354,7 +347,6 @@
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_3"/>
-   <addaction name="menu_2"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action">

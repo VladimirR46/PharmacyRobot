@@ -66,6 +66,7 @@ void MainWindow::ServoInitialization()
 
 
     m_settingsWindow->initServo(&servo_array);
+
 }
 
 // Реализация слота
