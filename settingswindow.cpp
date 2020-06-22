@@ -312,8 +312,17 @@ void SettingsWindow::ClickCupboard(int row,int col)
 
         tw->setColumnWidth(tw->columnCount()-1,20);
 
-        if(tw->columnCount() > 1)
-            if(tableCupboard[index]->columnWidth(1) < tw->columnCount()*40 ) tableCupboard[index]->setColumnWidth(1,tw->columnCount()*40);
+        // Resize
+        int iWidth = 0;
+        for (int i=0; i<tw->columnCount(); i++)
+        {
+            iWidth += tw->horizontalHeader()->sectionSize(i);
+        }
+        iWidth += tw->verticalHeader()->width();
+        tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        if(tableCupboard[index]->columnWidth(1) < iWidth )
+            tableCupboard[index]->setColumnWidth(1, iWidth);
+
         tableCupboard[index]->setCellWidget(row,1,tw);
 
 
@@ -397,12 +406,20 @@ void SettingsWindow::LoadDatabase()
                     }
                     else
                     {
-                       tw->item(0,k)->setBackground(Qt::darkGreen);
+                       tw->item(0,k)->setBackground(Qt::blue);
                     }
 
-                    if(tw->columnCount() > 1)
-                        if(tableCupboard[i]->columnWidth(1) < tw->columnCount()*40 )
-                            tableCupboard[i]->setColumnWidth(1,tw->columnCount()*40);
+
+                    // Resize
+                    int iWidth = 0;
+                    for (int i=0; i<tw->columnCount(); i++)
+                    {
+                        iWidth += tw->horizontalHeader()->sectionSize(i);
+                    }
+                    iWidth += tw->verticalHeader()->width();
+                    tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+                    if(tableCupboard[i]->columnWidth(1) < iWidth )
+                        tableCupboard[i]->setColumnWidth(1, iWidth);
 
                 }
                 tableCupboard[i]->setCellWidget(j,1,tw);
