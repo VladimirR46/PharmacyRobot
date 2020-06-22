@@ -11,6 +11,7 @@
 //#include <QVector>
 
 #include "servoline.h"
+#include "cellsettingswindow.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -57,6 +58,8 @@ public:
     Settings settings() const;
 
     void LoadDatabase();
+    void LoadDBFromFile();
+    void SaveDBFromFile();
 
 
     // Опишем сигналы:
@@ -66,6 +69,8 @@ signals:
 
 
 private slots:
+
+    void SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, int cell_);
     void on_ButtonReadAll_clicked();
 
     void Click(int col,int row);
@@ -76,9 +81,12 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_pushButton_2_clicked();
+
 private:
     Settings m_settings;
     Ui::SettingsWindow *ui;
+    CellSettingsWindow* m_cellSettingsWindow;
 
     QTableWidget *tableWidget;
 

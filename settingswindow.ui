@@ -92,6 +92,10 @@
         <property name="text">
          <string>Настройки шкафов</string>
         </property>
+        <property name="icon">
+         <iconset resource="resource.qrc">
+          <normaloff>:/images/rack-server-magnifier_icon-icons.com_52826.png</normaloff>:/images/rack-server-magnifier_icon-icons.com_52826.png</iconset>
+        </property>
        </item>
       </widget>
      </item>
@@ -459,9 +463,16 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="text">
+              <string>Сохранить</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="pushButton">
              <property name="text">
-              <string>PushButton</string>
+              <string>Загрузить</string>
              </property>
             </widget>
            </item>
