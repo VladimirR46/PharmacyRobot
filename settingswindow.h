@@ -35,6 +35,7 @@ class SettingsWindow : public QDialog
 public:
 
     QJsonObject FindProduct(int code);
+    void DecreaseCount(int code);
 
     struct Cashbox
     {
@@ -55,6 +56,7 @@ public:
         int TcpPort = 4442;
 
         Cashbox cashbox[2];
+
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
@@ -69,8 +71,8 @@ public:
     Settings settings() const;
 
     void LoadDatabase();
-    void LoadDBFromFile();
-    void SaveDBFromFile();
+    void LoadDBFromFile(QString openFileName);
+    void SaveDBFromFile(QString saveFileName);
 
     void saveSettings();
     void loadSettings();

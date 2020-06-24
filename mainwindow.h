@@ -39,7 +39,9 @@ public:
        EMPTY,
        FIND,
        MOVE,
-       GATHER
+       GATHER,
+       FIND_CASHBOX,
+       DROP
     };
 
     struct SStateManager
@@ -67,6 +69,9 @@ public:
     };
 
     SStateManager StateManager;
+    int ProductCode = 0;
+
+    int Resolution_dP13 = 2; // Переменная не позволяет два раза отправлять запрос
 
 
 private:

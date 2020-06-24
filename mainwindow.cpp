@@ -5,6 +5,7 @@
 
 #include <QModbusRtuSerialMaster>
 #include <QVector>
+#include <QMessageBox>
 
 #include "ServoRegisters.h"
 
@@ -83,6 +84,9 @@ void MainWindow::JOGSlot(int id, int state)
 //---------------------------------------------------------------------------------------
 void MainWindow::SendRead_dP13()
 {
+    if(Resolution_dP13 != 2) return;
+    Resolution_dP13 = 0;
+
     QVector<Servoline>::iterator iter= servo_array.begin();
     for (;iter!=servo_array.end();++iter)
     {
@@ -237,13 +241,13 @@ void MainWindow::MovePoint(int X, int Y)
     QVector<Servoline>::iterator iter= servo_array.begin();
     for (;iter!=servo_array.end();++iter)
     {
+        iter->MC_OK = false;
+
         quint16 init = 0x0001; // !!!!  0x0001
         SetBit(init,1,2);
         WriteModbusRequest(iter->ServoAddres, PA508,init);
         SetBit(init,0,2);
         WriteModbusRequest(iter->ServoAddres, PA508,init);
-
-        iter->MC_OK = false;
     }
 
 
@@ -257,13 +261,27 @@ quint8 CheckBit(quint8 byte, int index)
 //-----------------------------------------------------------------------
 void MainWindow::Check_dP13(int ServoAddres, quint16 value)
 {
-    if(CheckBit(value,2) && StateManager.GetOldState() == State::FIND)
-    {
-        FindServo(ServoAddres)->MC_OK = true;
+    Resolution_dP13++;
 
-        if(FindServo(1)->MC_OK && FindServo(2)->MC_OK)
+    if(CheckBit(value,2) ) FindServo(ServoAddres)->MC_OK = true;
+    else FindServo(ServoAddres)->MC_OK = false;
+
+    if(FindServo(1)->MC_OK && FindServo(2)->MC_OK && StateManager.GetState() == State::MOVE)
+    {
+        switch (StateManager.GetOldState())
+        {
+        case State::FIND:
             StateManager.SetState(State::GATHER);
+            break;
+        case State::FIND_CASHBOX:
+            StateManager.SetState(State::DROP);
+            break;
+        default:
+            qDebug() << "Check_dP13 Error";
+            break;
+        }
     }
+
 
     if(CheckBit(value,1))
     {
@@ -280,35 +298,24 @@ void MainWindow::Check_dP13(int ServoAddres, quint16 value)
 //---------------------------------------------------------------------------------
 void MainWindow::TaskTimerSlot()
 {
-    //if(p_TcpClient->TaskList.count() > 0)
+    if(p_TcpClient->TaskList.count() > 0)
     {
-        //p_TcpClient->TaskList[0].Cashbox
-
-        // Если список лекарств пуст то удаляем задачу
-        if(p_TcpClient->TaskList[0].CodeList.count() == 0)
-        {
-           p_TcpClient->TaskList.remove(0);
-           return;
-        }
-
-        int ProductCode = 228228; //p_TcpClient->TaskList[0].CodeList.remove(0);
-
         switch (StateManager.GetState())
         {
         case State::FIND:
         {
+            ProductCode = p_TcpClient->TaskList[0].CodeList[0];
             // Найти в базе данных
             QJsonObject obj = m_settingsWindow->FindProduct(ProductCode);
-            if(!obj.isEmpty())
+            if(!obj.isEmpty() || obj.value("Count").toInt() == 0)
             {
-               if(obj.value("Count").toInt() > 0)
-               {
-                  MovePoint(obj.value("X").toInt(),obj.value("Y").toInt());
-                  StateManager.SetState(State::MOVE);
-               }
-               else p_TcpClient->TaskList[0].CodeList.remove(0);
+              MovePoint(obj.value("X").toInt(),obj.value("Y").toInt());
+              StateManager.SetState(State::MOVE);
             }
-            else qDebug() << "Not found code: " << ProductCode;
+            else {
+                qDebug() << "Not found code: " << ProductCode;
+                p_TcpClient->TaskList[0].CodeList.remove(0);
+            }
             break;
         }
         case State::MOVE:
@@ -316,7 +323,39 @@ void MainWindow::TaskTimerSlot()
             qDebug() << "Move to - " << ProductCode;
             break;
         case State::GATHER:
+        {
             qDebug() << "GATHER to - " << ProductCode;
+
+            m_settingsWindow->DecreaseCount(ProductCode); // Уменьшаем значение на 1
+
+            int n = QMessageBox::warning(0,"Warning","GATHER?","Yes","No",QString(),0,1);
+
+            // Удаляем код из списка
+            p_TcpClient->TaskList[0].CodeList.remove(0);
+
+            if(p_TcpClient->TaskList[0].CodeList.count() > 0) StateManager.SetState(State::FIND);
+            else StateManager.SetState(State::FIND_CASHBOX);
+
+            break;
+        }
+        case State::FIND_CASHBOX:
+        {
+            qDebug() << "FIND_CASHBOX to - " << ProductCode;
+            int Cashbox = p_TcpClient->TaskList[0].Cashbox;
+            MovePoint(m_settingsWindow->settings().cashbox[Cashbox-1].X,m_settingsWindow->settings().cashbox[Cashbox-1].Y);
+            StateManager.SetState(State::MOVE);
+            break;
+        }
+        case State::DROP:
+            qDebug() << "DROP to All";
+
+            // Удаляем задачу
+            p_TcpClient->TaskList.remove(0);
+
+            if(p_TcpClient->TaskList.count() == 0) StateManager.SetState(State::EMPTY);
+            else StateManager.SetState(State::FIND);
+
+
             break;
         default:
             qDebug() << "State not found";
@@ -324,8 +363,8 @@ void MainWindow::TaskTimerSlot()
         }
 
     }
-    //else
-    //    TaskTimer->stop(); // Если задач нет отключаем таймер
+    else
+        TaskTimer->stop(); // Если задач нет отключаем таймер
 }
 //---------------------------------------------------------------------------------
 void MainWindow::ProcessPA508(int ServoAddres, quint16 value)
@@ -484,7 +523,11 @@ void  MainWindow::WriteModbus(int Server, QModbusDataUnit writeUnit)
 //----------------------------------------------------------------------------------------------------------------
 void MainWindow::RunTaskSlot(int cashbox, int list)
 {
-    TaskTimer->start(100);
+    if(!TaskTimer->isActive())
+    {
+        StateManager.SetState(State::FIND);
+        TaskTimer->start(100);
+    }
 }
 //----------------------------------------------------------------------------------------------------------------
 void MainWindow::on_UpdateCurPosButton_clicked()
@@ -601,19 +644,21 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    quint8 value = 0x9;
-    StateManager.SetState(State::FIND);
-    TaskTimer->start(500);
-
     /*
-    quint8 DO[4];
-    //GetBit(DO,value);
+    TcpClient::Task task;
+    task.Cashbox = 1;
 
-    quint16 EE = (value & 0xff) & 0x0f;
-    DO[1] = ((value & 0xff) & 0xf0) >> 4;
-    DO[2] = ((value & 0xff00) >> 8) & 0x0f;
-    DO[3] = (((value & 0xff00) >> 8) & 0xf0) >> 4;
-*/
-    qDebug() << CheckBit(value,0) << " " << CheckBit(value,1) << " " << CheckBit(value,2) << " " << CheckBit(value,3);
+    task.CodeList.push_back(23431);
+    task.CodeList.push_back(234131);
+    task.CodeList.push_back(234312);
 
+    p_TcpClient->TaskList.push_back(task);
+
+    task.Cashbox = 2;
+    p_TcpClient->TaskList.push_back(task);
+
+    ///////////////////////////////////////
+    RunTaskSlot(0,0);
+    */
+    m_settingsWindow->DecreaseCount(228228);
 }
