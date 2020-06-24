@@ -14,6 +14,16 @@ private:
 
 
 public:
+
+    struct Task
+    {
+      int Cashbox;
+      QVector<int> CodeList;
+    };
+
+    QVector<Task> TaskList;
+
+
     explicit TcpClient(QWidget *parent = nullptr);
 
     void Connect(const QString& strHost, int nPort);
@@ -21,6 +31,7 @@ public:
 
 
 signals:
+    void RunTaskSignal(int cashbox, int list);
 
 private slots:
     void slotReadyRead();

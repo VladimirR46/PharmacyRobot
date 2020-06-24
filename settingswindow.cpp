@@ -3,7 +3,7 @@
 
 #include "QHeaderView"
 #include<QMessageBox>
-
+#include <QElapsedTimer>
 
 
 SettingsWindow::SettingsWindow(QWidget *parent) :
@@ -12,6 +12,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    p_settings = new QSettings();
     m_cellSettingsWindow =  new CellSettingsWindow();
 
     connect(m_cellSettingsWindow, &CellSettingsWindow::SaveCellConfig, this, &SettingsWindow::SaveCellConfigSlot);
@@ -21,36 +22,13 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     connect(ui->ButtonQuit, &QPushButton::clicked, this, &SettingsWindow::hide);
 
 
-    ui->parityCombo->setCurrentIndex(2);
-#if QT_CONFIG(modbus_serialport)
-    ui->baudCombo->setCurrentText(QString::number(m_settings.baud));
-    ui->dataBitsCombo->setCurrentText(QString::number(m_settings.dataBits));
-    ui->stopBitsCombo->setCurrentText(QString::number(m_settings.stopBits));
-#endif
-    ui->timeoutSpinner->setValue(m_settings.responseTime);
-    ui->retriesSpinner->setValue(m_settings.numberOfRetries);
-    ui->portSpinner->setValue(m_settings.Port);
-
-    connect(ui->applyButton, &QPushButton::clicked, [this]() {
-#if QT_CONFIG(modbus_serialport)
-        m_settings.parity = ui->parityCombo->currentIndex();
-        if (m_settings.parity > 0)
-            m_settings.parity++;
-        m_settings.baud = ui->baudCombo->currentText().toInt();
-        m_settings.dataBits = ui->dataBitsCombo->currentText().toInt();
-        m_settings.stopBits = ui->stopBitsCombo->currentText().toInt();
-#endif
-        m_settings.responseTime = ui->timeoutSpinner->value();
-        m_settings.numberOfRetries = ui->retriesSpinner->value();
-        m_settings.Port = ui->portSpinner->value();
-
-        m_settings.TcpIP = ui->IPEdit->text();
-        m_settings.TcpPort = ui->PortSpinner->value();
-
+    connect(ui->applyButton, &QPushButton::clicked, [this]()
+    {
+        saveSettings();
         hide();
     });
 
-
+    loadSettings();
 
     // Указываем реистры которые хотим видеть в настройках
     RegistrEditList.push_back(PA771);
@@ -63,13 +41,35 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     RegistrEditList.push_back(PA702);
     RegistrEditList.push_back(PA508);
     RegistrEditList.push_back(PA509);
+}
 
+QJsonObject SettingsWindow::FindProduct(int code)
+{
+    QElapsedTimer timer;
+    timer.start();
 
+    int boxCount  = db["modules"].toArray().count();
+    for(int i = 0; i < boxCount; i++)
+    {
+        for(int j = 0; j < db["modules"].toArray()[i].toArray().count(); j++)
+        {
+           for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
+           {
+               if(db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject().value("ProductCode").toInt() == code)
+               {
+                   qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
+                   return db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject();
+               }
+           }
+        }
+    }
 
+    return QJsonObject();
 }
 
 SettingsWindow::~SettingsWindow()
 {
+    delete p_settings;
     delete m_cellSettingsWindow;
     delete ui;
 }
@@ -284,6 +284,75 @@ void SettingsWindow::SaveDBFromFile()
     jsonFile.write(QJsonDocument(db).toJson(QJsonDocument::Indented));
     jsonFile.close();   // Закрываем файл
 }
+//-------------------------------------------------------------------------------------------------
+void SettingsWindow::SaveSettingsToStruct()
+{
+    int parity = ui->parityCombo->currentIndex();
+    if (parity > 0) parity++;
+    m_settings.parity = parity;
+    m_settings.baud = ui->baudCombo->currentText().toInt();
+    m_settings.dataBits = ui->dataBitsCombo->currentText().toInt();
+    m_settings.stopBits = ui->stopBitsCombo->currentText().toInt();
+    m_settings.responseTime = ui->timeoutSpinner->value();
+    m_settings.numberOfRetries = ui->retriesSpinner->value();
+    m_settings.Port = ui->portSpinner->value();
+
+    m_settings.TcpIP = ui->IPEdit->text();
+    m_settings.TcpPort = ui->PortSpinner->value();
+
+    m_settings.cashbox[0].X = ui->spinBox1X->value();
+    m_settings.cashbox[0].Y = ui->spinBox1Y->value();
+    m_settings.cashbox[1].X = ui->spinBox2X->value();
+    m_settings.cashbox[1].Y = ui->spinBox2Y->value();
+}
+//-------------------------------------------------------------------------------------------------
+void SettingsWindow::saveSettings()
+{
+    // Сохраняем параметры COM подключения для Modbus
+    int parity = ui->parityCombo->currentIndex();
+    if (parity > 0) parity++;
+    p_settings->setValue("parity",parity);
+    p_settings->setValue("baud", ui->baudCombo->currentText().toInt());
+    p_settings->setValue("dataBits", ui->dataBitsCombo->currentText().toInt());
+    p_settings->setValue("stopBits", ui->stopBitsCombo->currentText().toInt());
+    p_settings->setValue("responseTime", ui->timeoutSpinner->value());
+    p_settings->setValue("numberOfRetries", ui->retriesSpinner->value());
+    p_settings->setValue("Port", ui->portSpinner->value());
+
+    // Сохраняем TCP настройки
+    p_settings->setValue("TcpIP",ui->IPEdit->text());
+    p_settings->setValue("TcpPort",ui->PortSpinner->value());
+
+    //Сохраняем координаты касс выдачи товара
+    p_settings->setValue("Cashbox1X",ui->spinBox1X->value());
+    p_settings->setValue("Cashbox1Y",ui->spinBox1Y->value());
+    p_settings->setValue("Cashbox2X",ui->spinBox2X->value());
+    p_settings->setValue("Cashbox2Y",ui->spinBox2Y->value());
+
+    SaveSettingsToStruct();
+}
+//-------------------------------------------------------------------------------------------------
+void SettingsWindow::loadSettings()
+{
+    int parity = p_settings->value("parity",QSerialPort::OddParity).toInt();
+    if (parity > 0) parity--;
+    ui->parityCombo->setCurrentIndex(parity);
+    ui->baudCombo->setCurrentText(QString::number(p_settings->value("baud",QSerialPort::Baud57600).toInt()));
+    ui->dataBitsCombo->setCurrentText(QString::number(p_settings->value("dataBits",QSerialPort::Data8).toInt()));
+    ui->stopBitsCombo->setCurrentText(QString::number(p_settings->value("stopBits",QSerialPort::OneStop).toInt()));
+    ui->timeoutSpinner->setValue(p_settings->value("responseTime",1000).toInt());
+    ui->retriesSpinner->setValue(p_settings->value("numberOfRetries",3).toInt());
+    ui->portSpinner->setValue(p_settings->value("Port",10).toInt());
+
+    ui->IPEdit->setText(p_settings->value("TcpIP","127.0.0.1").toString());
+    ui->PortSpinner->setValue(p_settings->value("TcpPort",4442).toInt());
+
+    ui->spinBox1X->setValue(p_settings->value("Cashbox1X",0).toInt());
+    ui->spinBox1Y->setValue(p_settings->value("Cashbox1Y",0).toInt());
+    ui->spinBox2X->setValue(p_settings->value("Cashbox2X",0).toInt());
+    ui->spinBox2Y->setValue(p_settings->value("Cashbox2Y",0).toInt());
+    SaveSettingsToStruct();
+}
 //--------------------------------------------------------------------------------------------------
 void SettingsWindow::ClickCupboard(int row,int col)
 {
@@ -386,6 +455,7 @@ void SettingsWindow::LoadDatabase()
             if(db["modules"].toArray()[i].toArray()[j].toArray().count() > 0)
             {
                 QTableWidget* tw = new QTableWidget();
+                tw->setSelectionMode(QAbstractItemView::NoSelection);
                 tw->setRowCount(1);
                 tw->verticalHeader()->hide();
                 connect(tw, SIGNAL(cellClicked(int,int)), this, SLOT(Click(int,int)));
@@ -498,4 +568,14 @@ void SettingsWindow::on_pushButton_clicked()
 void SettingsWindow::on_pushButton_2_clicked()
 {
     SaveDBFromFile();
+}
+
+void SettingsWindow::on_ButtonAddCell_clicked()
+{
+    int index = ui->tabCupboard->currentIndex();
+    int row = tableCupboard[index]->currentRow();
+    for(int i = 0; i < ui->spinCellList->value(); i++)
+   {
+      ClickCupboard(row,0);
+   }
 }

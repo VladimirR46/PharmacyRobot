@@ -27,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_jogWindow = new JOGWindow(this);
     connect(m_jogWindow, SIGNAL(JOGSignal(int,int)), this, SLOT(JOGSlot(int,int)));
 
+    p_TcpClient = new TcpClient(); // Создаем TCP client
+    connect(p_TcpClient, &TcpClient::RunTaskSignal, this, &MainWindow::RunTaskSlot);
+
     initActions();
 
     modbusDevice = new QModbusRtuSerialMaster(this);
@@ -34,8 +37,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(modbusDevice, &QModbusClient::errorOccurred, [this](QModbusDevice::Error) {
         statusBar()->showMessage(modbusDevice->errorString(), 5000);
     });
-
-
 
     if (!modbusDevice)
             statusBar()->showMessage(tr("Could not create Modbus master."), 5000);
@@ -49,11 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timerUpdatePos, SIGNAL(timeout()), this, SLOT(on_UpdateCurPosButton_clicked()));
 
     timerIsHome = new QTimer();
-    connect(timerIsHome, SIGNAL(timeout()), this, SLOT(Update_dP13()));
+    connect(timerIsHome, SIGNAL(timeout()), this, SLOT(SendRead_dP13()));
 
-
-    p_TcpClient = new TcpClient(); // Создаем TCP client
-
+    TaskTimer = new QTimer();
+    connect(TaskTimer, SIGNAL(timeout()), this, SLOT(TaskTimerSlot()));
 }
 //-------------------------------------------------------------------------------------------------------------
 void MainWindow::ServoInitialization()
@@ -81,7 +81,7 @@ void MainWindow::JOGSlot(int id, int state)
     statusBar()->showMessage(tr("JOG"), 2000);
 }
 //---------------------------------------------------------------------------------------
-void MainWindow::Update_dP13()
+void MainWindow::SendRead_dP13()
 {
     QVector<Servoline>::iterator iter= servo_array.begin();
     for (;iter!=servo_array.end();++iter)
@@ -223,6 +223,110 @@ QVector<Servoline>::iterator MainWindow::FindServo(int ServoAddres)
 
     return iter;
 }
+
+void MainWindow::WritePoint(int X, int Y)
+{
+    WriteIntModbusRequest(1, PA701,X);
+    WriteIntModbusRequest(2, PA701,Y);
+}
+
+void MainWindow::MovePoint(int X, int Y)
+{
+    WritePoint(X,Y);
+
+    QVector<Servoline>::iterator iter= servo_array.begin();
+    for (;iter!=servo_array.end();++iter)
+    {
+        quint16 init = 0x0001; // !!!!  0x0001
+        SetBit(init,1,2);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+        SetBit(init,0,2);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+
+        iter->MC_OK = false;
+    }
+
+
+}
+//----------------------------------------------------------------------
+quint8 CheckBit(quint8 byte, int index)
+{
+    if (byte&(1<<index)) return 1;
+    else return 0;
+}
+//-----------------------------------------------------------------------
+void MainWindow::Check_dP13(int ServoAddres, quint16 value)
+{
+    if(CheckBit(value,2) && StateManager.GetOldState() == State::FIND)
+    {
+        FindServo(ServoAddres)->MC_OK = true;
+
+        if(FindServo(1)->MC_OK && FindServo(2)->MC_OK)
+            StateManager.SetState(State::GATHER);
+    }
+
+    if(CheckBit(value,1))
+    {
+        FindServo(ServoAddres)->isHome = true;
+        if((FindServo(1)->isHome || !ui->checkAxisX->isChecked()) &&
+                (FindServo(2)->isHome || !ui->checkAxisY->isChecked()))
+        {
+            ui->SHomeButton->setEnabled(true);
+            timerIsHome->stop();
+        }
+    }
+    else FindServo(ServoAddres)->isHome = false;
+}
+//---------------------------------------------------------------------------------
+void MainWindow::TaskTimerSlot()
+{
+    //if(p_TcpClient->TaskList.count() > 0)
+    {
+        //p_TcpClient->TaskList[0].Cashbox
+
+        // Если список лекарств пуст то удаляем задачу
+        if(p_TcpClient->TaskList[0].CodeList.count() == 0)
+        {
+           p_TcpClient->TaskList.remove(0);
+           return;
+        }
+
+        int ProductCode = 228228; //p_TcpClient->TaskList[0].CodeList.remove(0);
+
+        switch (StateManager.GetState())
+        {
+        case State::FIND:
+        {
+            // Найти в базе данных
+            QJsonObject obj = m_settingsWindow->FindProduct(ProductCode);
+            if(!obj.isEmpty())
+            {
+               if(obj.value("Count").toInt() > 0)
+               {
+                  MovePoint(obj.value("X").toInt(),obj.value("Y").toInt());
+                  StateManager.SetState(State::MOVE);
+               }
+               else p_TcpClient->TaskList[0].CodeList.remove(0);
+            }
+            else qDebug() << "Not found code: " << ProductCode;
+            break;
+        }
+        case State::MOVE:
+            SendRead_dP13();
+            qDebug() << "Move to - " << ProductCode;
+            break;
+        case State::GATHER:
+            qDebug() << "GATHER to - " << ProductCode;
+            break;
+        default:
+            qDebug() << "State not found";
+            break;
+        }
+
+    }
+    //else
+    //    TaskTimer->stop(); // Если задач нет отключаем таймер
+}
 //---------------------------------------------------------------------------------
 void MainWindow::ProcessPA508(int ServoAddres, quint16 value)
 {
@@ -242,24 +346,17 @@ void MainWindow::ProcessPA508(int ServoAddres, quint16 value)
         ui->PowerButton->setText("Включить");
         ui->PowerButton->setIcon(QIcon(":/images/power.png"));
     }
+
+    if(!ui->SHomeButton->isEnabled())
+    {
+        ui->SHomeButton->setEnabled(true);
+        timerIsHome->stop();
+    }
 }
 //-----------------------------------------------------------------------------------------------------------------------
 void MainWindow::ProcessPA509(int ServoAddres, quint16 value)
 {
 
-}
-//----------------------------------------------------------------------
-void MainWindow::isHOME(int ServoAddres, quint16 value)
-{
-    if(value == 0xb) FindServo(ServoAddres)->isHome = true;
-    else FindServo(ServoAddres)->isHome = false;
-
-    if((FindServo(1)->isHome || !ui->checkAxisX->isChecked()) &&
-            (FindServo(2)->isHome || !ui->checkAxisY->isChecked()))
-    {
-        ui->SHomeButton->setEnabled(true);
-        timerIsHome->stop();
-    }
 }
 //----------------------------------------------------------------------
 void MainWindow::readReady()
@@ -294,7 +391,7 @@ void MainWindow::readReady()
             ProcessPA508(reply->serverAddress(),unit.value(0));
             break;
         case dP13:
-            isHOME(reply->serverAddress(),unit.value(0));
+            Check_dP13(reply->serverAddress(),unit.value(0));
             break;
         default:
           //cout<<"Error, bad input, quitting\n";
@@ -385,7 +482,11 @@ void  MainWindow::WriteModbus(int Server, QModbusDataUnit writeUnit)
     }
 }
 //----------------------------------------------------------------------------------------------------------------
-
+void MainWindow::RunTaskSlot(int cashbox, int list)
+{
+    TaskTimer->start(100);
+}
+//----------------------------------------------------------------------------------------------------------------
 void MainWindow::on_UpdateCurPosButton_clicked()
 {
     ReadModbusRequest(1, dP01,2);
@@ -496,4 +597,23 @@ void MainWindow::on_PauseButton_toggled(bool checked)
 void MainWindow::on_pushButton_clicked()
 {
     p_TcpClient->SendServerResponse();
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    quint8 value = 0x9;
+    StateManager.SetState(State::FIND);
+    TaskTimer->start(500);
+
+    /*
+    quint8 DO[4];
+    //GetBit(DO,value);
+
+    quint16 EE = (value & 0xff) & 0x0f;
+    DO[1] = ((value & 0xff) & 0xf0) >> 4;
+    DO[2] = ((value & 0xff00) >> 8) & 0x0f;
+    DO[3] = (((value & 0xff00) >> 8) & 0xf0) >> 4;
+*/
+    qDebug() << CheckBit(value,0) << " " << CheckBit(value,1) << " " << CheckBit(value,2) << " " << CheckBit(value,3);
+
 }

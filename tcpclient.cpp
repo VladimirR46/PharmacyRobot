@@ -31,17 +31,18 @@ void TcpClient::Connect(const QString& strHost, int nPort)
 //---------------------------------------------------------------------------------------------------
 void TcpClient::jsonReceived(const QJsonObject &docObj)
 {
-
-    int Cashbox = docObj["Cashbox"].toInt();
-    qDebug() << Cashbox;
+    Task task;
+    task.Cashbox = docObj["Cashbox"].toInt();
 
     QJsonArray array = docObj["CodeList"].toArray();
-
     foreach (const QJsonValue & v, array)
-        qDebug() << v.toInt();
+        task.CodeList.push_back(v.toInt());
 
-    const QByteArray jsonData = QJsonDocument(docObj).toJson(QJsonDocument::Compact);
-    qDebug() << QString::fromUtf8(jsonData);
+    TaskList.push_back(task);
+
+    //emit RunTaskSignal(Cashbox, CodeList);
+    //const QByteArray jsonData = QJsonDocument(docObj).toJson(QJsonDocument::Compact);
+    //qDebug() << QString::fromUtf8(jsonData);
 }
 //---------------------------------------------------------------------------------------------------
 void TcpClient::SendServerResponse()

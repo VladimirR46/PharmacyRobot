@@ -7,6 +7,8 @@
 #include <QSerialPort>
 #endif
 
+#include <QSettings>
+
 #include <QTableWidget>
 //#include <QVector>
 
@@ -31,19 +33,28 @@ class SettingsWindow : public QDialog
     Q_OBJECT
 
 public:
+
+    QJsonObject FindProduct(int code);
+
+    struct Cashbox
+    {
+        int X = 0;
+        int Y = 0;
+    };
+
     struct Settings {
-#if QT_CONFIG(modbus_serialport)
         int parity = QSerialPort::OddParity;
         int baud = QSerialPort::Baud57600;
         int dataBits = QSerialPort::Data8;
         int stopBits = QSerialPort::OneStop;
-#endif
         int responseTime = 1000;
         int numberOfRetries = 3;
         int Port = 10;
 
         QString TcpIP = "127.0.0.1";
         int TcpPort = 4442;
+
+        Cashbox cashbox[2];
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
@@ -61,8 +72,11 @@ public:
     void LoadDBFromFile();
     void SaveDBFromFile();
 
+    void saveSettings();
+    void loadSettings();
 
     // Опишем сигналы:
+    void SaveSettingsToStruct();
 signals:
         void  WriteModbusSignal(int Server, int RegistrAddres, quint16 value);
         void  ReadModbusSignal(int Server, int RegistrAddres, quint16 size); // Прочитать N регистров
@@ -83,6 +97,8 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_ButtonAddCell_clicked();
+
 private:
     Settings m_settings;
     Ui::SettingsWindow *ui;
@@ -95,6 +111,8 @@ private:
     QJsonObject db;
 
     QTableWidget* tableCupboard[5];
+
+    QSettings* p_settings;
 };
 
 #endif // SETTINGSWINDOW_H

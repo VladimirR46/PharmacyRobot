@@ -33,6 +33,40 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    enum State
+    {
+       NOT,
+       EMPTY,
+       FIND,
+       MOVE,
+       GATHER
+    };
+
+    struct SStateManager
+    {
+    public:
+
+        State GetOldState()
+        {
+            return OldState;
+        }
+
+        State GetState()
+        {
+            return CurrentState;
+        }
+
+        void SetState(State state)
+        {
+            OldState = CurrentState;
+            CurrentState = state;
+        }
+    private:
+        State CurrentState = State::EMPTY;
+        State OldState = State::NOT;
+    };
+
+    SStateManager StateManager;
 
 
 private:
@@ -43,15 +77,22 @@ private:
     void SetBit(quint16 &value, quint8 bit, quint8 index);
     void ProcessPA508(int ServoAddres, quint16 value);
     void ProcessPA509(int ServoAddres, quint16 value);
-    void isHOME(int ServoAddres, quint16 value);
+
+    void WritePoint(int X, int Y);
+    void MovePoint(int X, int Y);
+    void Check_dP13(int ServoAddres, quint16 value);
 
     QVector<Servoline>::iterator FindServo(int ServoAddres); // Поиск обьекта сервы по адресу в массиве
 
 
 private slots:
+
+    void TaskTimerSlot();
+    void RunTaskSlot(int cashbox, int list);
+
     void JOGSlot(int id, int state);
 
-    void Update_dP13();
+    void SendRead_dP13();
 
     void  WriteModbusRequest(int Server, int RegistrAddres, quint16 value);
     void  WriteIntModbusRequest(int Server, int RegistrAddres, qint32 value);
@@ -78,9 +119,12 @@ private slots:
     void on_PauseButton_toggled(bool checked);
 
     void on_pushButton_clicked();
+    void on_pushButton_2_clicked();
 
 private:
     Ui::MainWindow *ui;
+
+    TcpClient* p_TcpClient;
 
     SettingsWindow *m_settingsWindow;
     JOGWindow *m_jogWindow;
@@ -92,9 +136,7 @@ private:
 
     QTimer *timerUpdatePos;
     QTimer *timerIsHome;
-
-    TcpClient* p_TcpClient;
-
+    QTimer *TaskTimer;
 
 };
 #endif // MAINWINDOW_H

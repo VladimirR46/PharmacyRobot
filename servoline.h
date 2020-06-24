@@ -14,6 +14,7 @@ public:
     int ServoAddres = 0;
     bool isPower = false;
     bool isHome = false;
+    bool MC_OK = false;
 
     QString GetName();
 
