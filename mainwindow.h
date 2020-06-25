@@ -109,19 +109,8 @@ private slots:
     void ConnectToTCP();
 
     void ServoInitialization();
-    void on_UpdateCurPosButton_clicked();
-    void on_checkUpdatePos_stateChanged(int arg1);
-    void on_ReadPointButton_clicked();
     void on_PowerButton_clicked();
     void on_SHomeButton_clicked();
-
-    void on_SetPoint0Button_clicked();
-
-    void on_SetPoint1Button_clicked();
-
-    void on_MoveP0Button_clicked();
-
-    void on_PauseButton_toggled(bool checked);
 
     void on_pushButton_clicked();
     void on_pushButton_2_clicked();
@@ -139,7 +128,6 @@ private:
 
     QVector<Servoline> servo_array;
 
-    QTimer *timerUpdatePos;
     QTimer *timerIsHome;
     QTimer *TaskTimer;
 

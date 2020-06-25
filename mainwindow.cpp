@@ -47,9 +47,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     ServoInitialization();
 
-    timerUpdatePos = new QTimer();
-    connect(timerUpdatePos, SIGNAL(timeout()), this, SLOT(on_UpdateCurPosButton_clicked()));
-
     timerIsHome = new QTimer();
     connect(timerIsHome, SIGNAL(timeout()), this, SLOT(SendRead_dP13()));
 
@@ -418,13 +415,12 @@ void MainWindow::readReady()
           m_jogWindow->SetJOGSpeed(unit.value(0));
           break;
         case dP01:
-          ui->CurrPosEdit->setText(QString::number(GetEncoderFeedback(unit)));
+          //ui->CurrPosEdit->setText(QString::number(GetEncoderFeedback(unit)));
           break;
         case PA701:
-            ui->Point0Edit->setText(QString::number(uint16_To_int32(unit.value(1),unit.value(0)),10));
+            //ui->Point0Edit->setText(QString::number(uint16_To_int32(unit.value(1),unit.value(0)),10));
             break;
         case PA703:
-            ui->Point1Edit->setText(QString::number(uint16_To_int32(unit.value(1),unit.value(0)),10));
             break;
         case PA508:
             ProcessPA508(reply->serverAddress(),unit.value(0));
@@ -530,31 +526,12 @@ void MainWindow::RunTaskSlot(int cashbox, int list)
     }
 }
 //----------------------------------------------------------------------------------------------------------------
-void MainWindow::on_UpdateCurPosButton_clicked()
-{
-    ReadModbusRequest(1, dP01,2);
-}
-
-void MainWindow::on_checkUpdatePos_stateChanged(int arg1)
-{
-    if(!timerUpdatePos->isActive())
-        timerUpdatePos->start(100); // И запустим таймер
-    else
-        timerUpdatePos->stop();
-}
-
 void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
 {
     if (bit == 1)
         value |=1<<index*4;
     else
         value &=~(1<<index*4);
-}
-
-void MainWindow::on_ReadPointButton_clicked()
-{
-    ReadModbusRequest(1, PA701,2); // Точк =  0
-    ReadModbusRequest(1, PA703,2); // Точка =  1
 }
 
 void MainWindow::on_PowerButton_clicked()
@@ -599,42 +576,6 @@ void MainWindow::on_SHomeButton_clicked()
 
     ui->SHomeButton->setEnabled(false);
     timerIsHome->start(200);
-}
-
-void MainWindow::on_SetPoint0Button_clicked()
-{
-     int point = ui->Point0Edit->text().toInt();
-     WriteIntModbusRequest(1, PA701,point);
-}
-
-void MainWindow::on_SetPoint1Button_clicked()
-{
-    int point = ui->Point1Edit->text().toInt();
-    WriteIntModbusRequest(1, PA703,point);
-}
-
-void MainWindow::on_MoveP0Button_clicked()
-{
-    quint16 init = 0x0001; // !!!!  0x0001
-    SetBit(init,1,2);
-    WriteModbusRequest(1, PA508,init);
-    SetBit(init,0,2);
-    WriteModbusRequest(1, PA508,init);
-}
-
-void MainWindow::on_PauseButton_toggled(bool checked)
-{
-    quint16 init = 0x0000; // !!!!  0x0001
-    if(checked)
-    {
-        SetBit(init,1,3);
-        //WriteModbusRequest(PA508,init);
-    }
-    else
-    {
-        SetBit(init,0,3);
-        //WriteModbusRequest(PA508,init);
-    }
 }
 
 void MainWindow::on_pushButton_clicked()
