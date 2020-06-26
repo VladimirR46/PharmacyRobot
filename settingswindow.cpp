@@ -239,17 +239,6 @@ void SettingsWindow::initServo(QVector<Servoline>* servo_ptr)
 //-------------------------------------------------------------------------------------------------------------------
 void SettingsWindow::SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, int cell_)
 {
-    // Добавить в базу данных
-    QJsonArray boxes = db["modules"].toArray(); // Массив шкафов
-    QJsonArray Lines = boxes[box_].toArray();
-    QJsonArray Cells = Lines[line_].toArray();
-    Cells[cell_] = obj;
-
-    // Сохраняем
-    Lines[line_] = Cells;
-    boxes[box_] = Lines;
-    db["modules"] = boxes;
-
     database.UpdateTable(obj, box_, line_, cell_);
 
     //цвет
@@ -464,44 +453,35 @@ void SettingsWindow::ClickCupboard(int row,int col)
         data.append(row);
         data.append(tw->columnCount()-1);
         data.append("Тестрамон");
-        data.append(10);
+        data.append(0);
 
         database.inserIntoTable(data);
 
-        // Добавить в базу данных
-        QJsonArray modules = db["modules"].toArray();
-        QJsonArray Line = modules[index].toArray();
-
-        QJsonArray Cells = Line[row].toArray();
-
-        QJsonObject obj;
-        obj["Name"] = "Цитрамон";
-        obj["ProductCode"] = 0;
-        obj["Count"] = 0;
-        obj["X"] = 0;
-        obj["Y"] = 0;
-        Cells.append(obj);
-
-        // Сохраняем
-        Line[row] = Cells;
-        modules[index] = Line;
-        db["modules"] = modules;
-
     }
 }
+//----------------------------------------------------------------------
 void SettingsWindow::LoadDatabase()
 {
     ui->tabCupboard->clear();
 
-
-
-
+    qDebug() <<  database.GetMaxBoxCount();
     // Перебираем все шкафы
     for(int i = 0; i < database.GetMaxBoxCount(); i++)
     {
+        // Формируем выборку для шкафа
+        database.model->setFilter("box="+QString::number(i));
+        database.model->setSort(2, Qt::AscendingOrder);
+        database.model->select();
+
+        for (int i = 0; i < database.model->rowCount(); ++i) {
+            int box_ = database.model->record(i).value("box").toInt();
+            int line_ = database.model->record(i).value("line").toInt();
+            int cell_ = database.model->record(i).value("cell").toInt();
+            qDebug() << box_ << line_ << cell_;
+        }
+
         tableCupboard[i] = new QTableWidget();
         tableCupboard[i]->setEditTriggers(0);
-
         tableCupboard[i]->setStyleSheet( // "background-color: #2F2F2F;"
                                        "border: 1px solid #4181C0;"
                                        "color: #4181C0;"
@@ -519,97 +499,65 @@ void SettingsWindow::LoadDatabase()
         connect(tableCupboard[i], SIGNAL(cellClicked(int,int)), this, SLOT(ClickCupboard(int,int)));
 
 
-
-
-
-    }
-
-
-
-
-    //*********************************************
-    /*
-    for(int i = 0; i < db["modules"].toArray().count(); i++)
-    {
-        tableCupboard[i] = new QTableWidget();
-        tableCupboard[i]->setEditTriggers(0);
-
-        tableCupboard[i]->setStyleSheet( // "background-color: #2F2F2F;"
-                                       "border: 1px solid #4181C0;"
-                                       "color: #4181C0;"
-                                       "selection-background-color: #4181C0;"
-                                       "selection-color: #FFF;"
-
-                                       "QHeaderView::section {"
-                                       "border-top: 0px solid 4181C0;"
-                                       "border-bottom: 1px solid 4181C0;"
-                                       "border-right: 1px solid 4181C0;"
-                                       "background:#2F2F2F;"
-                                       "color: #4181C0;"
-                                       "}");
-
-        connect(tableCupboard[i], SIGNAL(cellClicked(int,int)), this, SLOT(ClickCupboard(int,int)));
-
-
-        tableCupboard[i]->setRowCount(db["modules"].toArray()[i].toArray().count());
+        int maxline = database.GetMaxLineCount(i);
+        tableCupboard[i]->setRowCount(maxline);
         tableCupboard[i]->setColumnCount(2);
         tableCupboard[i]->setHorizontalHeaderLabels(QStringList() << "" << "Ячейки");
 
-        for(int j = 0; j < db["modules"].toArray()[i].toArray().count(); j++)
-        {
-            QTableWidgetItem *item = new QTableWidgetItem("Добавить");
-            tableCupboard[i]->setRowHeight(j,57);
-            tableCupboard[i]->setItem(j,0,item);
 
-            // Есть ли ячейки в строке
-            if(db["modules"].toArray()[i].toArray()[j].toArray().count() > 0)
+        for (int j = 0; j < database.model->rowCount(); ++j)
+        {
+            int lineIndex = database.model->record(j).value("line").toInt();
+            int cellIndex = database.model->record(j).value("cell").toInt();
+
+            QTableWidgetItem *item = tableCupboard[i]->item(lineIndex,1);
+            if (!item)
             {
-                QTableWidget* tw = new QTableWidget();
+                QTableWidgetItem *item = new QTableWidgetItem("Добавить");
+                tableCupboard[i]->setRowHeight(lineIndex,57);
+                tableCupboard[i]->setItem(lineIndex,0,item);
+            }
+
+            QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[i]->cellWidget(lineIndex,1));
+            if(!tw)
+            {
+                tw = new QTableWidget();
                 tw->setSelectionMode(QAbstractItemView::NoSelection);
                 tw->setRowCount(1);
                 tw->verticalHeader()->hide();
                 connect(tw, SIGNAL(cellClicked(int,int)), this, SLOT(Click(int,int)));
-                // Загружаем ячейки
-                for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
-                {
-                    tw->setColumnCount(k+1);
-                    tw->setColumnWidth(k,20);
-
-                    //цвет
-                    tw->setItem(0,k, new QTableWidgetItem);
-                    int count = db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject()["Count"].toInt();
-                    if(count > 0)
-                    {
-                        tw->item(0,k)->setTextAlignment(Qt::AlignCenter);
-                        tw->item(0,k)->setText(QString::number(count));
-                        tw->item(0,k)->setBackground(Qt::green);
-                    }
-                    else
-                    {
-                       tw->item(0,k)->setBackground(Qt::blue);
-                    }
-
-
-                    // Resize
-                    int iWidth = 0;
-                    for (int i=0; i<tw->columnCount(); i++)
-                    {
-                        iWidth += tw->horizontalHeader()->sectionSize(i);
-                    }
-                    iWidth += tw->verticalHeader()->width();
-                    tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-                    if(tableCupboard[i]->columnWidth(1) < iWidth )
-                        tableCupboard[i]->setColumnWidth(1, iWidth);
-
-                }
-                tableCupboard[i]->setCellWidget(j,1,tw);
             }
+            tw->setColumnCount(cellIndex+1);
+            tw->setColumnWidth(cellIndex,20);
+
+            tw->setItem(0,cellIndex, new QTableWidgetItem);
+            int count = database.model->record(i).value("count").toInt();
+            if(count > 0)
+            {
+                tw->item(0,cellIndex)->setTextAlignment(Qt::AlignCenter);
+                tw->item(0,cellIndex)->setText(QString::number(count));
+                tw->item(0,cellIndex)->setBackground(Qt::green);
+            }
+            else tw->item(0,cellIndex)->setBackground(Qt::blue);
+
+            // Resize
+            int iWidth = 0;
+            for (int i=0; i<tw->columnCount(); i++)
+            {
+                iWidth += tw->horizontalHeader()->sectionSize(i);
+            }
+            iWidth += tw->verticalHeader()->width();
+            tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            if(tableCupboard[i]->columnWidth(1) < iWidth )
+                tableCupboard[i]->setColumnWidth(1, iWidth);
+
+            tableCupboard[i]->setCellWidget(lineIndex,1,tw);
         }
 
         tableCupboard[i]->setColumnWidth(0,60);
         ui->tabCupboard->addTab(tableCupboard[i],"Шкаф " + QString::number(i+1));
     }
-    */
+
 }
 
 
@@ -672,11 +620,13 @@ void SettingsWindow::on_ButtonAddCupboard_clicked()
 void SettingsWindow::on_pushButton_clicked()
 {
     // Выбираем файл
+    /*
     QString openFileName = QFileDialog::getOpenFileName(this,
                                                         tr("Open Json File"),
                                                         QString(),
                                                         tr("JSON (*.json)"));
     LoadDBFromFile(openFileName);
+    */
     LoadDatabase();
 }
 

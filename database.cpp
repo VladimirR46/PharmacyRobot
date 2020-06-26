@@ -1,6 +1,5 @@
 #include "database.h"
 #include <QDebug>
-#include <QSqlRecord>
 #include <QJsonObject>
 
 DataBase::DataBase(QObject *parent) : QObject(parent)
@@ -67,6 +66,19 @@ bool DataBase::UpdateTable(QJsonObject& obj, int box_, int line_, int cell_)
     return ret;
 }
 
+int DataBase::GetMaxCellCount(int box, int line)
+{
+    int max = 0;
+    QSqlQuery query(db);
+    query.exec("SELECT MAX(cell) FROM druglist WHERE box="+QString::number(box)+" AND line="+QString::number(line));
+        if (query.next()) {
+            qDebug() << query.value(0).toString();
+            max = query.value(0).toInt()+1;
+        }
+    query.finish();
+    return max;
+}
+
 int DataBase::GetMaxBoxCount()
 {
     int max = 0;
@@ -74,7 +86,7 @@ int DataBase::GetMaxBoxCount()
     query.exec("SELECT MAX(box) FROM druglist");
         if (query.next()) {
             qDebug() << query.value(0).toString();
-            max = query.value(0).toInt();
+            max = query.value(0).toInt()+1;
         }
     query.finish();
     return max;
@@ -87,7 +99,7 @@ int DataBase::GetMaxLineCount(int box)
     query.exec("SELECT MAX(line) FROM druglist WHERE box="+QString::number(box));
         if (query.next()) {
             qDebug() << query.value(0).toString();
-            max = query.value(0).toInt();
+            max = query.value(0).toInt()+1;
         }
     query.finish();
     return max;

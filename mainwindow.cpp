@@ -601,5 +601,6 @@ void MainWindow::on_pushButton_2_clicked()
     ///////////////////////////////////////
     RunTaskSlot(0,0);
     */
-    m_settingsWindow->DecreaseCount(228228);
+
+    //m_settingsWindow->DecreaseCount(228228);
 }
