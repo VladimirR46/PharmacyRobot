@@ -24,6 +24,8 @@
 #include <QFile>
 #include <QDir>
 
+#include "database.h"
+
 namespace Ui {
 class SettingsWindow;
 }
@@ -115,6 +117,8 @@ private:
     QTableWidget* tableCupboard[5];
 
     QSettings* p_settings;
+
+    DataBase database;
 };
 
 #endif // SETTINGSWINDOW_H

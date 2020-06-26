@@ -4,6 +4,8 @@
 #include "QHeaderView"
 #include<QMessageBox>
 #include <QElapsedTimer>
+#include <QDebug>
+
 
 
 SettingsWindow::SettingsWindow(QWidget *parent) :
@@ -248,6 +250,8 @@ void SettingsWindow::SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, i
     boxes[box_] = Lines;
     db["modules"] = boxes;
 
+    database.UpdateTable(obj, box_, line_, cell_);
+
     //цвет
     QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box_]->cellWidget(line_,1));
     if(tw && obj["Count"].toInt() > 0)
@@ -454,6 +458,16 @@ void SettingsWindow::ClickCupboard(int row,int col)
         tableCupboard[index]->setCellWidget(row,1,tw);
 
 
+        QVariantList data;
+        data.append(0);
+        data.append(index);
+        data.append(row);
+        data.append(tw->columnCount()-1);
+        data.append("Тестрамон");
+        data.append(10);
+
+        database.inserIntoTable(data);
+
         // Добавить в базу данных
         QJsonArray modules = db["modules"].toArray();
         QJsonArray Line = modules[index].toArray();
@@ -478,6 +492,43 @@ void SettingsWindow::ClickCupboard(int row,int col)
 void SettingsWindow::LoadDatabase()
 {
     ui->tabCupboard->clear();
+
+
+
+
+    // Перебираем все шкафы
+    for(int i = 0; i < database.GetMaxBoxCount(); i++)
+    {
+        tableCupboard[i] = new QTableWidget();
+        tableCupboard[i]->setEditTriggers(0);
+
+        tableCupboard[i]->setStyleSheet( // "background-color: #2F2F2F;"
+                                       "border: 1px solid #4181C0;"
+                                       "color: #4181C0;"
+                                       "selection-background-color: #4181C0;"
+                                       "selection-color: #FFF;"
+
+                                       "QHeaderView::section {"
+                                       "border-top: 0px solid 4181C0;"
+                                       "border-bottom: 1px solid 4181C0;"
+                                       "border-right: 1px solid 4181C0;"
+                                       "background:#2F2F2F;"
+                                       "color: #4181C0;"
+                                       "}");
+
+        connect(tableCupboard[i], SIGNAL(cellClicked(int,int)), this, SLOT(ClickCupboard(int,int)));
+
+
+
+
+
+    }
+
+
+
+
+    //*********************************************
+    /*
     for(int i = 0; i < db["modules"].toArray().count(); i++)
     {
         tableCupboard[i] = new QTableWidget();
@@ -558,7 +609,7 @@ void SettingsWindow::LoadDatabase()
         tableCupboard[i]->setColumnWidth(0,60);
         ui->tabCupboard->addTab(tableCupboard[i],"Шкаф " + QString::number(i+1));
     }
-
+    */
 }
 
 
