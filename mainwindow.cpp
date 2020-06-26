@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->setWindowIcon(QIcon(":/images/robot.png"));
 
-    // Создаем окно настроек
+    // Создаем  окно настроек
     m_settingsWindow = new SettingsWindow(this);
 
     connect(m_settingsWindow, &SettingsWindow::ReadModbusSignal, this, &MainWindow::ReadModbusRequest);
