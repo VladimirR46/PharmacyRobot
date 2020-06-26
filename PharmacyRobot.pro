@@ -1,6 +1,7 @@
 
 QT += serialbus
 QT += core network
+QT += sql
 # QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -23,6 +24,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     cellsettingswindow.cpp \
+    database.cpp \
     jogwindow.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -33,6 +35,7 @@ SOURCES += \
 HEADERS += \
     ServoRegisters.h \
     cellsettingswindow.h \
+    database.h \
     jogwindow.h \
     mainwindow.h \
     servoline.h \
