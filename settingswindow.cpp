@@ -69,54 +69,13 @@ QJsonObject SettingsWindow::FindProduct(int code)
     return QJsonObject();
 }
 //--------------------------------------------------------------------------------------
-void SettingsWindow::DecreaseCount(int code)
+void SettingsWindow::DecreaseCount(int productCode)
 {
-    QElapsedTimer timer;
-    timer.start();
 
-    for(int i = 0; i < db["modules"].toArray().count(); i++)
-    {
-        for(int j = 0; j < db["modules"].toArray()[i].toArray().count(); j++)
-        {
-           for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
-           {
-               if(db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject().value("ProductCode").toInt() == code)
-               {
-                   QJsonObject obj = db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject();
-                   int count = obj["Count"].toInt();
-
-                   if(count > 0) count--;
-                   else return;
-
-                   obj["Count"] = count;
-
-                   // Добавить в базу данных
-                   QJsonArray boxes = db["modules"].toArray(); // Массив шкафов
-                   QJsonArray Lines = boxes[i].toArray();
-                   QJsonArray Cells = Lines[j].toArray();
-                   Cells[k] = obj;
-
-                   // Сохраняем
-                   Lines[j] = Cells;
-                   boxes[i] = Lines;
-                   db["modules"] = boxes;
-
-                   //Обновление счетчика
-                   QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[i]->cellWidget(j,1));
-                   if(tw) tw->item(0,k)->setText(QString::number(obj["Count"].toInt()));
-
-                   //SaveDBFromFile(ui->PatchEdit->text());
-                   qDebug() << "DecreaseCount took" << timer.elapsed() << "milliseconds";
-                   return;
-               }
-           }
-        }
-    }
 }
 
 SettingsWindow::~SettingsWindow()
 {
-    SaveDBFromFile(ui->PatchEdit->text());
     delete p_settings;
     delete m_cellSettingsWindow;
     delete ui;
@@ -278,46 +237,6 @@ void SettingsWindow::Click(int row,int col)
     m_cellSettingsWindow->ShowSettings(db, index, tableCupboard[index]->currentRow(), col);
 
 }
-//--------------------------------------------------------------------------------------------------
-void SettingsWindow::LoadDBFromFile(QString openFileName)
-{
-    QFileInfo fileInfo(openFileName);   // С помощью QFileInfo
-    QDir::setCurrent(fileInfo.path());  // установим текущую рабочую директорию, где будет файл
-    // Создаём объект файла и открываем его на чтение
-    QFile jsonFile(openFileName);
-    if (!jsonFile.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    // Считываем весь файл
-    QByteArray saveData = jsonFile.readAll();
-    // Создаём QJsonDocument
-    QJsonDocument jsonDocument(QJsonDocument::fromJson(saveData));
-    // Из которого выделяем объект в текущий рабочий QJsonObject
-    db = jsonDocument.object();
-
-    ui->PatchEdit->setText(openFileName);
-}
-//--------------------------------------------------------------------------------------------------
-void SettingsWindow::SaveDBFromFile(QString saveFileName)
-{
-
-    QFileInfo fileInfo(saveFileName);   // С помощью QFileInfo
-    QDir::setCurrent(fileInfo.path());  // установим текущую рабочую директорию, где будет файл, иначе может не заработать
-    // Создаём объект файла и открываем его на запись
-    QFile jsonFile(saveFileName);
-    if (!jsonFile.open(QIODevice::WriteOnly))
-    {
-        return;
-    }
-
-    // Записываем текущий объект Json в файл
-    jsonFile.write(QJsonDocument(db).toJson(QJsonDocument::Indented));
-    jsonFile.close();   // Закрываем файл
-
-    ui->PatchEdit->setText(saveFileName);
-}
 //-------------------------------------------------------------------------------------------------
 void SettingsWindow::SaveSettingsToStruct()
 {
@@ -366,12 +285,6 @@ void SettingsWindow::saveSettings()
     p_settings->setValue("dbPatch", ui->PatchEdit->text());
 
     SaveSettingsToStruct();
-
-    //Сохраняем базу данных
-    if(ui->PatchEdit->text() != "")
-    {
-        SaveDBFromFile(ui->PatchEdit->text());
-    }
 }
 //-------------------------------------------------------------------------------------------------
 void SettingsWindow::loadSettings()
@@ -398,12 +311,8 @@ void SettingsWindow::loadSettings()
 
     SaveSettingsToStruct();
 
-    // Загружаем базу данных
-    if(ui->PatchEdit->text() != "")
-    {
-        LoadDBFromFile(ui->PatchEdit->text());
-        LoadDatabase();
-    }
+    LoadDatabase();
+
 }
 //--------------------------------------------------------------------------------------------------
 void SettingsWindow::ClickCupboard(int row,int col)
@@ -622,45 +531,6 @@ void SettingsWindow::on_ButtonAddCupboard_clicked()
 
     tableCupboard[index]->setColumnWidth(0,60);
     ui->tabCupboard->addTab(tableCupboard[index],"Шкаф " + QString::number(index+1));
-
-    // Добавляем шкаф в базу данных
-    QJsonArray modules = db["modules"].toArray();
-
-    QJsonArray Lines;
-    for(int i = 0; i < ui->spinCupboard->value(); i++ )
-    {
-       QJsonArray Line;
-       Lines.append(Line);
-    }
-    //message["Module"+QString::number(k)] = Lines;
-    modules.append(Lines);
-
-
-    db["modules"] = modules;
-
-}
-
-void SettingsWindow::on_pushButton_clicked()
-{
-    // Выбираем файл
-    /*
-    QString openFileName = QFileDialog::getOpenFileName(this,
-                                                        tr("Open Json File"),
-                                                        QString(),
-                                                        tr("JSON (*.json)"));
-    LoadDBFromFile(openFileName);
-    */
-    LoadDatabase();
-}
-
-void SettingsWindow::on_pushButton_2_clicked()
-{
-    // С помощью диалогового окна получаем имя файла с абсолютным путём
-    QString saveFileName = QFileDialog::getSaveFileName(this,
-                                                        tr("Save Json File"),
-                                                        QString(),
-                                                        tr("JSON (*.json)"));
-    SaveDBFromFile(saveFileName);
 }
 
 void SettingsWindow::on_ButtonAddCell_clicked()

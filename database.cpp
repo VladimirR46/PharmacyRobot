@@ -39,7 +39,6 @@ DataBase::~DataBase()
 bool DataBase::inserIntoTable(const QVariantList &data)
 {
      int row=model->rowCount();
-     qDebug() << "rowCount" << row;
      model->insertRows(row, 1);
      model->setData(model->index(row, 0), data[0].toInt());
      model->setData(model->index(row, 1), data[1].toInt());

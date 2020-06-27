@@ -37,7 +37,7 @@ class SettingsWindow : public QDialog
 public:
 
     QJsonObject FindProduct(int code);
-    void DecreaseCount(int code);
+    void DecreaseCount(int productCode);
 
     struct Cashbox
     {
@@ -73,8 +73,6 @@ public:
     Settings settings() const;
 
     void LoadDatabase();
-    void LoadDBFromFile(QString openFileName);
-    void SaveDBFromFile(QString saveFileName);
 
     void saveSettings();
     void loadSettings();
@@ -96,11 +94,6 @@ private slots:
 
 
     void on_ButtonAddCupboard_clicked();
-
-    void on_pushButton_clicked();
-
-    void on_pushButton_2_clicked();
-
     void on_ButtonAddCell_clicked();
 
 private:
