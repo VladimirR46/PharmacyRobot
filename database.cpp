@@ -9,11 +9,17 @@ DataBase::DataBase(QObject *parent) : QObject(parent)
 
     if(db.open())
     {
+        if(db.tables().count() == 0)
+           createTable();
+
+
         model = new QSqlTableModel(parent, db);
         model->setTable("druglist");
         model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
         model->select();
+
+
 
         qDebug() << model->lastError().text();
 
@@ -57,6 +63,7 @@ bool DataBase::UpdateTable(QJsonObject& obj, int box_, int line_, int cell_)
     {
         QSqlRecord record = model->record(0);
         record.setValue("name", obj["Name"].toString());
+        record.setValue("count", obj["Count"].toInt());
         model->setRecord(0, record);
 
         if(model->submitAll()) ret = true;
@@ -79,14 +86,36 @@ int DataBase::GetMaxCellCount(int box, int line)
     return max;
 }
 
+bool DataBase::createTable()
+{
+    QSqlQuery query;
+    if(!query.exec( "CREATE TABLE druglist ("
+                    "productcode INTEGER,"
+                    "box INTEGER,"
+                    "line INTEGER,"
+                    "cell INTEGER,"
+                    "name VARCHAR(255),"
+                    "count INTEGER"
+                        " )"
+                    )){
+        qDebug() << "DataBase: error of create ";
+        qDebug() << query.lastError().text();
+        return false;
+    } else {
+        return true;
+    }
+    return false;
+}
+
 int DataBase::GetMaxBoxCount()
 {
     int max = 0;
     QSqlQuery query(db);
     query.exec("SELECT MAX(box) FROM druglist");
-        if (query.next()) {
-            qDebug() << query.value(0).toString();
-            max = query.value(0).toInt()+1;
+        if (query.next())
+        {
+            if(query.value(0).toString() != "")
+                max = query.value(0).toInt()+1;
         }
     query.finish();
     return max;

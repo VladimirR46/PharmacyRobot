@@ -25,6 +25,7 @@ public:
     int GetMaxBoxCount();
     int GetMaxLineCount(int box);
     int GetMaxCellCount(int box, int line);
+    bool createTable();
 
 signals:
 

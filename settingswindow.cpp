@@ -446,6 +446,8 @@ void SettingsWindow::ClickCupboard(int row,int col)
 
         tableCupboard[index]->setCellWidget(row,1,tw);
 
+        QElapsedTimer timer;
+        timer.start();
 
         QVariantList data;
         data.append(0);
@@ -457,6 +459,8 @@ void SettingsWindow::ClickCupboard(int row,int col)
 
         database.inserIntoTable(data);
 
+        qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
+
     }
 }
 //----------------------------------------------------------------------
@@ -465,6 +469,7 @@ void SettingsWindow::LoadDatabase()
     ui->tabCupboard->clear();
 
     qDebug() <<  database.GetMaxBoxCount();
+
     // Перебираем все шкафы
     for(int i = 0; i < database.GetMaxBoxCount(); i++)
     {
@@ -472,13 +477,14 @@ void SettingsWindow::LoadDatabase()
         database.model->setFilter("box="+QString::number(i));
         database.model->setSort(2, Qt::AscendingOrder);
         database.model->select();
-
+        /*
         for (int i = 0; i < database.model->rowCount(); ++i) {
             int box_ = database.model->record(i).value("box").toInt();
             int line_ = database.model->record(i).value("line").toInt();
             int cell_ = database.model->record(i).value("cell").toInt();
             qDebug() << box_ << line_ << cell_;
         }
+        */
 
         tableCupboard[i] = new QTableWidget();
         tableCupboard[i]->setEditTriggers(0);
@@ -504,9 +510,14 @@ void SettingsWindow::LoadDatabase()
         tableCupboard[i]->setColumnCount(2);
         tableCupboard[i]->setHorizontalHeaderLabels(QStringList() << "" << "Ячейки");
 
+        qDebug() << database.model->rowCount();
+
+        while (database.model->canFetchMore())
+                 database.model->fetchMore();
 
         for (int j = 0; j < database.model->rowCount(); ++j)
         {
+
             int lineIndex = database.model->record(j).value("line").toInt();
             int cellIndex = database.model->record(j).value("cell").toInt();
 
@@ -531,7 +542,7 @@ void SettingsWindow::LoadDatabase()
             tw->setColumnWidth(cellIndex,20);
 
             tw->setItem(0,cellIndex, new QTableWidgetItem);
-            int count = database.model->record(i).value("count").toInt();
+            int count = database.model->record(j).value("count").toInt();
             if(count > 0)
             {
                 tw->item(0,cellIndex)->setTextAlignment(Qt::AlignCenter);
@@ -552,6 +563,18 @@ void SettingsWindow::LoadDatabase()
                 tableCupboard[i]->setColumnWidth(1, iWidth);
 
             tableCupboard[i]->setCellWidget(lineIndex,1,tw);
+        }
+
+        //Добавляем в пустые строки кнопку
+        for(int j = 0; j < maxline; j++)
+        {
+            QTableWidgetItem *item = tableCupboard[i]->item(j,1);
+            if (!item)
+            {
+                QTableWidgetItem *item = new QTableWidgetItem("Добавить");
+                tableCupboard[i]->setRowHeight(j,57);
+                tableCupboard[i]->setItem(j,0,item);
+            }
         }
 
         tableCupboard[i]->setColumnWidth(0,60);
