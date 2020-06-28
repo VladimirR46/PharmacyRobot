@@ -45,33 +45,26 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     RegistrEditList.push_back(PA509);
 }
 
-QJsonObject SettingsWindow::FindProduct(int code)
+bool SettingsWindow::FindProduct(DataBase::Cell& cell, int productCode)
 {
     QElapsedTimer timer;
     timer.start();
 
-    int boxCount  = db["modules"].toArray().count();
-    for(int i = 0; i < boxCount; i++)
+    if(database.GetCell(cell,productCode))
     {
-        for(int j = 0; j < db["modules"].toArray()[i].toArray().count(); j++)
-        {
-           for(int k = 0; k < db["modules"].toArray()[i].toArray()[j].toArray().count(); k++)
-           {
-               if(db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject().value("ProductCode").toInt() == code)
-               {
-                   qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
-                   return db["modules"].toArray()[i].toArray()[j].toArray()[k].toObject();
-               }
-           }
-        }
+        qDebug() << "FindProduct operation took" << timer.elapsed() << "milliseconds";
+        return true;
     }
-
-    return QJsonObject();
+    return false;
 }
 //--------------------------------------------------------------------------------------
-void SettingsWindow::DecreaseCount(int productCode)
+void SettingsWindow::DecreaseProductCount(DataBase::Cell& cell)
 {
-
+    if(cell.Count > 0)
+    {
+        cell.Count--;
+        database.SetCellProductCount(cell.Count, cell.ProductCode);
+    }
 }
 
 SettingsWindow::~SettingsWindow()
@@ -196,17 +189,16 @@ void SettingsWindow::initServo(QVector<Servoline>* servo_ptr)
     }
 }
 //-------------------------------------------------------------------------------------------------------------------
-void SettingsWindow::SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, int cell_)
+void SettingsWindow::SaveCellConfigSlot(DataBase::Cell& cell)
 {
-    database.UpdateTable(obj, box_, line_, cell_);
-
+    database.SetCell(cell);
     //цвет
-    QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box_]->cellWidget(line_,1));
-    if(tw && obj["Count"].toInt() > 0)
+    QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[cell.Box]->cellWidget(cell.Line,1));
+    if(tw && cell.Count > 0)
     {
-        tw->item(0,cell_)->setTextAlignment(Qt::AlignCenter);
-        tw->item(0,cell_)->setText(QString::number(obj["Count"].toInt()));
-        tw->item(0,cell_)->setBackground(Qt::green);
+        tw->item(0,cell.Cell)->setTextAlignment(Qt::AlignCenter);
+        tw->item(0,cell.Cell)->setText(QString::number(cell.Count));
+        tw->item(0,cell.Cell)->setBackground(Qt::green);
     }
 
 }
@@ -234,7 +226,7 @@ void SettingsWindow::Click(int row,int col)
     //QMessageBox::information(0, "Information", QString::number(tableCupboard[index]->currentRow()) + " " + QString::number(col));
 
     // Добавить в базу данных
-    m_cellSettingsWindow->ShowSettings(db, index, tableCupboard[index]->currentRow(), col);
+    m_cellSettingsWindow->ShowSettings(database, index, tableCupboard[index]->currentRow(), col);
 
 }
 //-------------------------------------------------------------------------------------------------
@@ -282,9 +274,10 @@ void SettingsWindow::saveSettings()
     p_settings->setValue("Cashbox2X",ui->spinBox2X->value());
     p_settings->setValue("Cashbox2Y",ui->spinBox2Y->value());
 
-    p_settings->setValue("dbPatch", ui->PatchEdit->text());
-
     SaveSettingsToStruct();
+
+    // Сохраняем базу данных
+    database.model->submitAll();
 }
 //-------------------------------------------------------------------------------------------------
 void SettingsWindow::loadSettings()
@@ -306,8 +299,6 @@ void SettingsWindow::loadSettings()
     ui->spinBox1Y->setValue(p_settings->value("Cashbox1Y",0).toInt());
     ui->spinBox2X->setValue(p_settings->value("Cashbox2X",0).toInt());
     ui->spinBox2Y->setValue(p_settings->value("Cashbox2Y",0).toInt());
-
-    ui->PatchEdit->setText(p_settings->value("dbPatch","").toString());
 
     SaveSettingsToStruct();
 
@@ -358,15 +349,16 @@ void SettingsWindow::ClickCupboard(int row,int col)
         QElapsedTimer timer;
         timer.start();
 
-        QVariantList data;
-        data.append(0);
-        data.append(index);
-        data.append(row);
-        data.append(tw->columnCount()-1);
-        data.append("Тестрамон");
-        data.append(0);
-
-        database.inserIntoTable(data);
+        DataBase::Cell cell;
+        cell.Box = index;
+        cell.Line = row;
+        cell.Cell = tw->columnCount()-1;
+        cell.ProductCode = 0;
+        cell.Name = "Лекарство";
+        cell.Count = 0;
+        cell.X = 0;
+        cell.Y = 0;
+        database.inserIntoTable(cell);
 
         qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
 
@@ -376,8 +368,6 @@ void SettingsWindow::ClickCupboard(int row,int col)
 void SettingsWindow::LoadDatabase()
 {
     ui->tabCupboard->clear();
-
-    qDebug() <<  database.GetMaxBoxCount();
 
     // Перебираем все шкафы
     for(int i = 0; i < database.GetMaxBoxCount(); i++)
@@ -418,8 +408,6 @@ void SettingsWindow::LoadDatabase()
         tableCupboard[i]->setRowCount(maxline);
         tableCupboard[i]->setColumnCount(2);
         tableCupboard[i]->setHorizontalHeaderLabels(QStringList() << "" << "Ячейки");
-
-        qDebug() << database.model->rowCount();
 
         while (database.model->canFetchMore())
                  database.model->fetchMore();

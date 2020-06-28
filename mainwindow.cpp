@@ -301,29 +301,29 @@ void MainWindow::TaskTimerSlot()
         {
         case State::FIND:
         {
-            ProductCode = p_TcpClient->TaskList[0].CodeList[0];
+            CurrentCell.ProductCode = p_TcpClient->TaskList[0].CodeList[0];
             // Найти в базе данных
-            QJsonObject obj = m_settingsWindow->FindProduct(ProductCode);
-            if(!obj.isEmpty() || obj.value("Count").toInt() == 0)
+
+            if(m_settingsWindow->FindProduct(CurrentCell, CurrentCell.ProductCode) && CurrentCell.Count > 0)
             {
-              MovePoint(obj.value("X").toInt(),obj.value("Y").toInt());
+              MovePoint(CurrentCell.X,CurrentCell.Y);
               StateManager.SetState(State::MOVE);
             }
             else {
-                qDebug() << "Not found code: " << ProductCode;
+                qDebug() << "Not found code: " << CurrentCell.ProductCode;
                 p_TcpClient->TaskList[0].CodeList.remove(0);
             }
             break;
         }
         case State::MOVE:
             SendRead_dP13();
-            qDebug() << "Move to - " << ProductCode;
+            qDebug() << "Move to - " << CurrentCell.ProductCode;
             break;
         case State::GATHER:
         {
-            qDebug() << "GATHER to - " << ProductCode;
+            qDebug() << "GATHER to - " << CurrentCell.ProductCode;
 
-            m_settingsWindow->DecreaseCount(ProductCode); // Уменьшаем значение на 1
+            m_settingsWindow->DecreaseProductCount(CurrentCell); // Уменьшаем значение на 1
 
             int n = QMessageBox::warning(0,"Warning","GATHER?","Yes","No",QString(),0,1);
 
@@ -337,7 +337,7 @@ void MainWindow::TaskTimerSlot()
         }
         case State::FIND_CASHBOX:
         {
-            qDebug() << "FIND_CASHBOX to - " << ProductCode;
+            qDebug() << "FIND_CASHBOX to - " << p_TcpClient->TaskList[0].Cashbox;
             int Cashbox = p_TcpClient->TaskList[0].Cashbox;
             MovePoint(m_settingsWindow->settings().cashbox[Cashbox-1].X,m_settingsWindow->settings().cashbox[Cashbox-1].Y);
             StateManager.SetState(State::MOVE);

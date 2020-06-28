@@ -7,6 +7,7 @@
 #include "tcpclient.h"
 #include <QTimer>
 #include <QTime>
+#include "database.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -69,7 +70,7 @@ public:
     };
 
     SStateManager StateManager;
-    int ProductCode = 0;
+    DataBase::Cell CurrentCell;
 
     int Resolution_dP13 = 2; // Переменная не позволяет два раза отправлять запрос
 

@@ -81,15 +81,6 @@
        </item>
        <item>
         <property name="text">
-         <string>TCP (ИнфоАптека)</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resource.qrc">
-          <normaloff>:/images/blue-internet-icon.png</normaloff>:/images/blue-internet-icon.png</iconset>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>Настройки шкафов</string>
         </property>
         <property name="icon">
@@ -114,7 +105,7 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -354,8 +345,51 @@
            </widget>
            <widget class="QWidget" name="tab_2">
             <attribute name="title">
-             <string>Подробности</string>
+             <string>TCP (ИнфоАптека)</string>
             </attribute>
+            <widget class="QWidget" name="layoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>10</y>
+               <width>165</width>
+               <height>48</height>
+              </rect>
+             </property>
+             <layout class="QFormLayout" name="formLayout">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>IP:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="IPEdit">
+                <property name="text">
+                 <string>127.0.0.1</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>Port:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="PortSpinner">
+                <property name="maximum">
+                 <number>9999</number>
+                </property>
+                <property name="value">
+                 <number>4442</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </widget>
          </item>
@@ -401,51 +435,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_3">
-        <widget class="QWidget" name="layoutWidget">
-         <property name="geometry">
-          <rect>
-           <x>11</x>
-           <y>11</y>
-           <width>165</width>
-           <height>48</height>
-          </rect>
-         </property>
-         <layout class="QFormLayout" name="formLayout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>IP:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="IPEdit">
-            <property name="text">
-             <string>127.0.0.1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string>Port:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="PortSpinner">
-            <property name="maximum">
-             <number>9999</number>
-            </property>
-            <property name="value">
-             <number>4442</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </widget>
        <widget class="QWidget" name="page_4">
         <layout class="QGridLayout" name="gridLayout_5">
          <property name="leftMargin">
@@ -461,38 +450,6 @@
           <number>0</number>
          </property>
          <item row="0" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
-            <widget class="QLabel" name="label_17">
-             <property name="text">
-              <string>Путь:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="PatchEdit">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>Загрузить</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_2">
-             <property name="text">
-              <string>Сохранить</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="1" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
             <widget class="QLabel" name="label_11">
@@ -530,10 +487,10 @@
            </item>
           </layout>
          </item>
-         <item row="2" column="0">
+         <item row="1" column="0">
           <widget class="QTabWidget" name="tabCupboard"/>
          </item>
-         <item row="3" column="0">
+         <item row="2" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QLabel" name="label_16">

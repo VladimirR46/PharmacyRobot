@@ -1,11 +1,6 @@
 #include "cellsettingswindow.h"
 #include "ui_cellsettingswindow.h"
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonArray>
-
 CellSettingsWindow::CellSettingsWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CellSettingsWindow)
@@ -15,21 +10,21 @@ CellSettingsWindow::CellSettingsWindow(QWidget *parent) :
     connect(ui->CancelButton , &QPushButton::clicked, this, &CellSettingsWindow::hide);
 }
 
-void CellSettingsWindow::ShowSettings(QJsonObject& db, int box_, int line_, int cell_)
+void CellSettingsWindow::ShowSettings(DataBase& db, int box_, int line_, int cell_)
 {
-    box = box_;
-    line = line_;
-    cell = cell_;
+    cell.Box = box_;
+    cell.Line = line_;
+    cell.Cell = cell_;
+    if(db.GetCell(cell))
+    {
+        ui->NameEdit->setText(cell.Name);
+        ui->ProductCodeEdit->setText(QString::number(cell.ProductCode));
+        ui->CountSpin->setValue(cell.Count);
+        ui->XEdit->setText(QString::number(cell.X));
+        ui->YEdit->setText(QString::number(cell.Y));
 
-    QJsonObject obj = db["modules"].toArray()[box].toArray()[line].toArray()[cell].toObject();
-
-    ui->NameEdit->setText(obj["Name"].toString());
-    ui->ProductCodeEdit->setText(QString::number(obj["ProductCode"].toInt()));
-    ui->CountSpin->setValue(obj["Count"].toInt());
-    ui->XEdit->setText(QString::number(obj["X"].toInt()));
-    ui->YEdit->setText(QString::number(obj["Y"].toInt()));
-
-   show();
+        show();
+    }
 }
 
 CellSettingsWindow::~CellSettingsWindow()
@@ -40,14 +35,13 @@ CellSettingsWindow::~CellSettingsWindow()
 
 void CellSettingsWindow::on_SaveButton_clicked()
 {
-    QJsonObject obj;
-    obj["Name"] = ui->NameEdit->text();
-    obj["ProductCode"] = ui->ProductCodeEdit->text().toInt();
-    obj["Count"] = ui->CountSpin->value();
-    obj["X"] = ui->XEdit->text().toInt();
-    obj["Y"] = ui->YEdit->text().toInt();
+    cell.Name = ui->NameEdit->text();
+    cell.ProductCode = ui->ProductCodeEdit->text().toInt();
+    cell.Count = ui->CountSpin->value();
+    cell.X = ui->XEdit->text().toInt();
+    cell.Y = ui->YEdit->text().toInt();
 
-    emit SaveCellConfig(obj, box, line, cell);
+    emit SaveCellConfig(cell);
 
     hide();
 }

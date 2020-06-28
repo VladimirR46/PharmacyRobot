@@ -8,18 +8,10 @@
 #endif
 
 #include <QSettings>
-
 #include <QTableWidget>
-//#include <QVector>
 
 #include "servoline.h"
 #include "cellsettingswindow.h"
-
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonArray>
-
 #include <QFileDialog>
 #include <QFile>
 #include <QDir>
@@ -36,8 +28,8 @@ class SettingsWindow : public QDialog
 
 public:
 
-    QJsonObject FindProduct(int code);
-    void DecreaseCount(int productCode);
+    bool FindProduct(DataBase::Cell& cell, int productCode);
+    void DecreaseProductCount(DataBase::Cell& cell);
 
     struct Cashbox
     {
@@ -86,7 +78,7 @@ signals:
 
 private slots:
 
-    void SaveCellConfigSlot(QJsonObject& obj, int box_, int line_, int cell_);
+    void SaveCellConfigSlot(DataBase::Cell& cell);
     void on_ButtonReadAll_clicked();
 
     void Click(int col,int row);
@@ -104,8 +96,6 @@ private:
     QTableWidget *tableWidget;
 
     QVector<Servoline>* servo_array;
-
-    QJsonObject db;
 
     QTableWidget* tableCupboard[5];
 

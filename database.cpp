@@ -1,6 +1,5 @@
 #include "database.h"
 #include <QDebug>
-#include <QJsonObject>
 
 DataBase::DataBase(QObject *parent) : QObject(parent)
 {
@@ -16,18 +15,9 @@ DataBase::DataBase(QObject *parent) : QObject(parent)
         model = new QSqlTableModel(parent, db);
         model->setTable("druglist");
         model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-
         model->select();
-
-
-
         qDebug() << model->lastError().text();
 
-        for (int i = 0; i < model->rowCount(); ++i) {
-            QString name = model->record(i).value("name").toString();
-            int salary = model->record(i).value("count").toInt();
-            qDebug() << name << salary;
-        }
     }
 }
 
@@ -36,40 +26,90 @@ DataBase::~DataBase()
     db.close();
 }
 
-bool DataBase::inserIntoTable(const QVariantList &data)
+bool DataBase::inserIntoTable(const Cell& cell)
 {
      int row=model->rowCount();
      model->insertRows(row, 1);
-     model->setData(model->index(row, 0), data[0].toInt());
-     model->setData(model->index(row, 1), data[1].toInt());
-     model->setData(model->index(row, 2), data[2].toInt());
-     model->setData(model->index(row, 3), data[3].toInt());
-     model->setData(model->index(row, 4), data[4].toString());
-     model->setData(model->index(row, 5), data[5].toInt());
+     model->setData(model->index(row, 0), cell.Box);
+     model->setData(model->index(row, 1), cell.Line);
+     model->setData(model->index(row, 2), cell.Cell);
+     model->setData(model->index(row, 3), cell.ProductCode);
+     model->setData(model->index(row, 4), cell.Name);
+     model->setData(model->index(row, 5), cell.Count);
+     model->setData(model->index(row, 6), cell.X);
+     model->setData(model->index(row, 7), cell.Y);
 
-     if(model->submitAll()) return true;
-     else return false;
+     return true;
 }
 
-bool DataBase::UpdateTable(QJsonObject& obj, int box_, int line_, int cell_)
+bool DataBase::GetCell(Cell& cell)
 {
-    bool ret = false;
-
-    model->setFilter("box="+QString::number(box_)+" AND line="+QString::number(line_)+" AND cell="+QString::number(cell_));
-    model->select();
+    model->setFilter("box="+QString::number(cell.Box)+" AND line="+QString::number(cell.Line)+" AND cell="+QString::number(cell.Cell));
+    if(!model->select()) return false;
 
     if(model->rowCount() == 1)
     {
         QSqlRecord record = model->record(0);
-        record.setValue("name", obj["Name"].toString());
-        record.setValue("count", obj["Count"].toInt());
-        model->setRecord(0, record);
-
-        if(model->submitAll()) ret = true;
-        else ret = false;
+        cell.ProductCode = record.value("productcode").toInt();
+        cell.Name = record.value("name").toString();
+        cell.Count = record.value("count").toInt();
+        cell.X = record.value("x").toInt();
+        cell.Y = record.value("y").toInt();
+        return true;
     }
 
-    return ret;
+    return false;
+}
+
+bool DataBase::GetCell(Cell& cell, int productcode)
+{
+    model->setFilter("productcode="+QString::number(productcode));
+    if(!model->select()) return false;
+
+    if(model->rowCount() == 1)
+    {
+        QSqlRecord record = model->record(0);
+        cell.Box = record.value("box").toInt();
+        cell.Line = record.value("line").toInt();
+        cell.Cell = record.value("cell").toInt();
+        cell.ProductCode = record.value("productcode").toInt();
+        cell.Name = record.value("name").toString();
+        cell.Count = record.value("count").toInt();
+        cell.X = record.value("x").toInt();
+        cell.Y = record.value("y").toInt();
+        return true;
+    }
+
+    return false;
+}
+
+bool DataBase::SetCell(DataBase::Cell &cell)
+{
+    model->setFilter("box="+QString::number(cell.Box)+" AND line="+QString::number(cell.Line)+" AND cell="+QString::number(cell.Cell));
+    if(!model->select()) return false;
+
+    if(model->rowCount() == 1)
+    {
+        QSqlRecord record = model->record(0);
+        record.setValue("productcode", cell.ProductCode);
+        record.setValue("name", cell.Name);
+        record.setValue("count", cell.Count);
+        record.setValue("x", cell.X);
+        record.setValue("y", cell.Y);
+        model->setRecord(0, record);
+        return true;
+    }
+    return false;
+}
+
+bool DataBase::SetCellProductCount(int count, int productcode)
+{
+    QSqlQuery query;
+    if(query.exec("UPDATE druglist SET count = "+QString::number(count)+" WHERE productcode = "+QString::number(productcode)))
+    {
+        return true;
+    }
+    return false;
 }
 
 int DataBase::GetMaxCellCount(int box, int line)
@@ -89,12 +129,14 @@ bool DataBase::createTable()
 {
     QSqlQuery query;
     if(!query.exec( "CREATE TABLE druglist ("
-                    "productcode INTEGER,"
                     "box INTEGER,"
                     "line INTEGER,"
                     "cell INTEGER,"
+                    "productcode INTEGER,"
                     "name VARCHAR(255),"
-                    "count INTEGER"
+                    "count INTEGER,"
+                    "x INTEGER,"
+                    "y INTEGER"
                         " )"
                     )){
         qDebug() << "DataBase: error of create ";
@@ -126,7 +168,6 @@ int DataBase::GetMaxLineCount(int box)
     QSqlQuery query(db);
     query.exec("SELECT MAX(line) FROM druglist WHERE box="+QString::number(box));
         if (query.next()) {
-            qDebug() << query.value(0).toString();
             max = query.value(0).toInt()+1;
         }
     query.finish();
