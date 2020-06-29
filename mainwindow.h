@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QTime>
 #include "database.h"
+#include "cartdrugs.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -115,10 +116,15 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_pushButton_3_clicked();
+
+    void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
 
     TcpClient* p_TcpClient;
+    CartDrugs* p_CartDrugs;
 
     SettingsWindow *m_settingsWindow;
     JOGWindow *m_jogWindow;

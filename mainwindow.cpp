@@ -33,8 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
     p_TcpClient = new TcpClient(); // Создаем TCP client
     connect(p_TcpClient, &TcpClient::RunTaskSignal, this, &MainWindow::RunTaskSlot);
 
-    initActions();
-
     modbusDevice = new QModbusRtuSerialMaster(this);
 
     connect(modbusDevice, &QModbusClient::errorOccurred, [this](QModbusDevice::Error) {
@@ -54,6 +52,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     TaskTimer = new QTimer();
     connect(TaskTimer, SIGNAL(timeout()), this, SLOT(TaskTimerSlot()));
+
+    p_CartDrugs = new CartDrugs(this);
+
+    initActions();
 }
 //-------------------------------------------------------------------------------------------------------------
 void MainWindow::ServoInitialization()
@@ -232,6 +234,9 @@ void MainWindow::initActions()
             this, &MainWindow::Power);
     connect(ui->actionSHome, &QAction::triggered,
             this, &MainWindow::SHome);
+
+    connect(ui->actionConnectCart, &QAction::triggered,
+            p_CartDrugs, &CartDrugs::ConnectCart);
 
 
     connect(ui->actionConnectTCP, &QAction::triggered,
@@ -586,4 +591,15 @@ void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
 void MainWindow::on_pushButton_clicked()
 {
     p_TcpClient->SendServerResponse();
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+  p_CartDrugs->SetTarget(1,ui->lineEdit->text().toInt());
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    ui->label_2->setText(QString::number(p_CartDrugs->GetPosition(1)));
+
 }
