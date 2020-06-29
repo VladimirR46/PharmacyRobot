@@ -40,7 +40,7 @@ void TcpClient::jsonReceived(const QJsonObject &docObj)
 
     TaskList.push_back(task);
 
-    //emit RunTaskSignal(Cashbox, CodeList);
+    emit RunTaskSignal();
     //const QByteArray jsonData = QJsonDocument(docObj).toJson(QJsonDocument::Compact);
     //qDebug() << QString::fromUtf8(jsonData);
 }

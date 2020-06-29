@@ -17,6 +17,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     p_settings = new QSettings();
     m_cellSettingsWindow =  new CellSettingsWindow();
 
+    m_RestockWindow = new RestockingWindow();
+    connect(m_RestockWindow, &RestockingWindow::RestockCellSignal, this, &SettingsWindow::RestockedCell);
+
     connect(m_cellSettingsWindow, &CellSettingsWindow::SaveCellConfig, this, &SettingsWindow::SaveCellConfigSlot);
 
     connect(ui->SettingsList,SIGNAL(currentRowChanged(int)),ui->stackedSettings,SLOT(setCurrentIndex(int)));
@@ -64,6 +67,58 @@ void SettingsWindow::DecreaseProductCount(DataBase::Cell& cell)
     {
         cell.Count--;
         database.SetCellProductCount(cell.Count, cell.ProductCode);
+
+        // Добавляем в список проданных товаров
+        database.inserIntoBuyedTable(cell);
+    }
+}
+
+void SettingsWindow::LoadBuyedList(QTableWidget *tableBuyed)
+{
+    p_tableBuyed = tableBuyed; // Сохраняем указатель
+
+    tableBuyed->setEditTriggers(0);
+    tableBuyed->setSelectionBehavior(QAbstractItemView::SelectRows);
+   /*
+    tableBuyed->setStyleSheet( // "background-color: #2F2F2F;"
+                                   "border: 1px solid #4181C0;"
+                                   "color: #4181C0;"
+                                   "selection-background-color: #4181C0;"
+                                   "selection-color: #FFF;"
+
+                                   "QHeaderView::section {"
+                                   "border-top: 0px solid 4181C0;"
+                                   "border-bottom: 1px solid 4181C0;"
+                                   "border-right: 1px solid 4181C0;"
+                                   "background:#2F2F2F;"
+                                   "color: #4181C0;"
+                                   "}");
+                                   */
+
+    connect(tableBuyed, SIGNAL(cellClicked(int,int)), this, SLOT(ClickBuyed(int,int)));
+
+    int row = database.buyed_model->rowCount();
+
+    tableBuyed->setRowCount(row);
+    tableBuyed->setColumnCount(7);
+    tableBuyed->setHorizontalHeaderLabels(QStringList() << "Шкаф №" << "Строка №" << "Ячейка №" << "Код товара" << "Название" << "Кол-во" << "Продано");
+
+    for(int i = 0; i < row; i++)
+    {
+        QSqlRecord record = database.buyed_model->record(i);
+        int productcode = record.value("productcode").toInt();
+        int buyed_count = record.value("count").toInt();
+
+        DataBase::Cell cell;
+        database.GetCell(cell, productcode);
+
+        tableBuyed->setItem(i,0,new QTableWidgetItem(QString::number(cell.Box+1)));
+        tableBuyed->setItem(i,1,new QTableWidgetItem(QString::number(cell.Line+1)));
+        tableBuyed->setItem(i,2,new QTableWidgetItem(QString::number(cell.Cell+1)));
+        tableBuyed->setItem(i,3,new QTableWidgetItem(QString::number(cell.ProductCode)));
+        tableBuyed->setItem(i,4,new QTableWidgetItem(cell.Name));
+        tableBuyed->setItem(i,5,new QTableWidgetItem(QString::number(cell.Count)));
+        tableBuyed->setItem(i,6,new QTableWidgetItem(QString::number(buyed_count)));
     }
 }
 
@@ -77,7 +132,6 @@ SettingsWindow::~SettingsWindow()
 
 void SettingsWindow::DisplayRegistr(int ServoAddres, int addres, quint16 value)
 {
-
     // Перебираем все серво классы
     QVector<Servoline>::iterator iter= servo_array->begin();
     for (int i = 0;iter!=servo_array->end();++iter,i++)
@@ -250,6 +304,30 @@ void SettingsWindow::SaveSettingsToStruct()
     m_settings.cashbox[1].X = ui->spinBox2X->value();
     m_settings.cashbox[1].Y = ui->spinBox2Y->value();
 }
+
+void SettingsWindow::RestockedCell(int row, int count)
+{
+    QSqlRecord record = database.buyed_model->record(row);
+    int productcode = record.value("productcode").toInt();
+    int newCount = record.value("count").toInt() - count;
+
+    int PCount = p_tableBuyed->item(row,5)->text().toInt() + count;
+    p_tableBuyed->item(row,5)->setText(QString::number(PCount));
+    database.SetCellProductCount(PCount,productcode);
+
+    if(newCount == 0)
+    {
+        database.buyed_model->removeRows(row, 1);
+        p_tableBuyed->removeRow(row);
+    }
+    else
+    {
+        record.setValue("count", newCount);
+        database.buyed_model->setRecord(row, record);
+        p_tableBuyed->item(row, 6)->setText(QString::number(newCount));
+    }
+    database.buyed_model->submitAll();
+}
 //-------------------------------------------------------------------------------------------------
 void SettingsWindow::saveSettings()
 {
@@ -277,7 +355,7 @@ void SettingsWindow::saveSettings()
     SaveSettingsToStruct();
 
     // Сохраняем базу данных
-    database.model->submitAll();
+    database.SaveDataBase();
 }
 //-------------------------------------------------------------------------------------------------
 void SettingsWindow::loadSettings()
@@ -363,6 +441,11 @@ void SettingsWindow::ClickCupboard(int row,int col)
         qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds";
 
     }
+}
+//--------------------------------------------------------------------------------
+void SettingsWindow::ClickBuyed(int row, int col)
+{
+    m_RestockWindow->ShowRestock(row, p_tableBuyed->item(row,6)->text().toInt());
 }
 //----------------------------------------------------------------------
 void SettingsWindow::LoadDatabase()
@@ -529,4 +612,18 @@ void SettingsWindow::on_ButtonAddCell_clicked()
    {
       ClickCupboard(row,0);
    }
+}
+
+void SettingsWindow::on_pushButton_clicked()
+{
+   if(ui->tabCupboard->count() == 0) return;
+
+    for (int i = 0; i < ui->spinCupboard->value(); i++)
+    {
+        for(int j = 0; j < ui->spinCellList->value(); j++)
+        {
+           ClickCupboard(i,0);
+        }
+    }
+
 }

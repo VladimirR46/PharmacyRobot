@@ -29,9 +29,12 @@ public:
     };
 
     QSqlTableModel* model;
+    QSqlTableModel* buyed_model;
 
+    void SaveDataBase();
 
     bool inserIntoTable(const Cell& cell);
+    bool inserIntoBuyedTable(const Cell& cell);
 
     bool GetCell(Cell& cell);
     bool GetCell(Cell& cell, int productcode);
@@ -43,6 +46,7 @@ public:
     int GetMaxLineCount(int box);
     int GetMaxCellCount(int box, int line);
     bool createTable();
+    bool createBuyedTable();
 
 signals:
 

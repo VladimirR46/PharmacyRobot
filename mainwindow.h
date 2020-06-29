@@ -94,7 +94,7 @@ private:
 private slots:
 
     void TaskTimerSlot();
-    void RunTaskSlot(int cashbox, int list);
+    void RunTaskSlot();
 
     void JOGSlot(int id, int state);
 
@@ -108,13 +108,12 @@ private slots:
     void readReady();
     void ConnectToPort();
     void ConnectToTCP();
+    void Power();
+    void SHome();
 
     void ServoInitialization();
-    void on_PowerButton_clicked();
-    void on_SHomeButton_clicked();
 
     void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -123,6 +122,8 @@ private:
 
     SettingsWindow *m_settingsWindow;
     JOGWindow *m_jogWindow;
+
+
 
     QModbusReply *lastRequest;
     QModbusClient *modbusDevice;

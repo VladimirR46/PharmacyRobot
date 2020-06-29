@@ -9,14 +9,23 @@ DataBase::DataBase(QObject *parent) : QObject(parent)
     if(db.open())
     {
         if(db.tables().count() == 0)
-           createTable();
-
+        {
+            createTable();
+            createBuyedTable();
+        }
 
         model = new QSqlTableModel(parent, db);
         model->setTable("druglist");
         model->setEditStrategy(QSqlTableModel::OnManualSubmit);
         model->select();
         qDebug() << model->lastError().text();
+
+        buyed_model = new QSqlTableModel(parent, db);
+        buyed_model->setTable("buyedlist");
+        buyed_model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+        buyed_model->setSort(1, Qt::AscendingOrder);
+        buyed_model->select();
+        qDebug() << buyed_model->lastError().text();
 
     }
 }
@@ -26,6 +35,38 @@ DataBase::~DataBase()
     db.close();
 }
 
+void DataBase::SaveDataBase()
+{
+    db.transaction();
+    model->submitAll();
+    db.commit();
+}
+//------------------------------------------------------
+bool DataBase::inserIntoBuyedTable(const Cell& cell)
+{
+    buyed_model->setFilter("productcode="+QString::number(cell.ProductCode));
+    if(!buyed_model->select()) return false;
+
+     if(buyed_model->rowCount() == 1)
+     {
+         QSqlRecord record = buyed_model->record(0);
+         int count = record.value("count").toInt()+1;
+         record.setValue("count", count);
+         buyed_model->setRecord(0, record);
+     }
+     else
+     {
+         int row=buyed_model->rowCount();
+         buyed_model->insertRows(row, 1);
+         buyed_model->setData(buyed_model->index(row, 0), cell.ProductCode);
+         buyed_model->setData(buyed_model->index(row, 1), 1);
+     }
+
+     if(buyed_model->submitAll()) return true;
+
+     return true;
+}
+//------------------------------------------------------
 bool DataBase::inserIntoTable(const Cell& cell)
 {
      int row=model->rowCount();
@@ -97,7 +138,9 @@ bool DataBase::SetCell(DataBase::Cell &cell)
         record.setValue("x", cell.X);
         record.setValue("y", cell.Y);
         model->setRecord(0, record);
-        return true;
+
+        if(model->submitAll())
+            return true;
     }
     return false;
 }
@@ -140,6 +183,23 @@ bool DataBase::createTable()
                         " )"
                     )){
         qDebug() << "DataBase: error of create ";
+        qDebug() << query.lastError().text();
+        return false;
+    } else {
+        return true;
+    }
+    return false;
+}
+
+bool DataBase::createBuyedTable()
+{
+    QSqlQuery query;
+    if(!query.exec( "CREATE TABLE buyedlist ("
+                    "productcode INTEGER,"
+                    "count INTEGER"
+                        " )"
+                    )){
+        qDebug() << "DataBase Buyed: error of create ";
         qDebug() << query.lastError().text();
         return false;
     } else {

@@ -31,7 +31,7 @@ public:
 
 
 signals:
-    void RunTaskSignal(int cashbox, int list);
+    void RunTaskSignal();
 
 private slots:
     void slotReadyRead();

@@ -17,6 +17,7 @@
 #include <QDir>
 
 #include "database.h"
+#include "restockingwindow.h"
 
 namespace Ui {
 class SettingsWindow;
@@ -30,6 +31,8 @@ public:
 
     bool FindProduct(DataBase::Cell& cell, int productCode);
     void DecreaseProductCount(DataBase::Cell& cell);
+
+    void LoadBuyedList(QTableWidget *tableBuyed);
 
     struct Cashbox
     {
@@ -77,21 +80,26 @@ signals:
 
 
 private slots:
+    void RestockedCell(int row, int count);
 
     void SaveCellConfigSlot(DataBase::Cell& cell);
     void on_ButtonReadAll_clicked();
 
     void Click(int col,int row);
     void ClickCupboard(int col,int row);
+    void ClickBuyed(int row,int col);
 
 
     void on_ButtonAddCupboard_clicked();
     void on_ButtonAddCell_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Settings m_settings;
     Ui::SettingsWindow *ui;
     CellSettingsWindow* m_cellSettingsWindow;
+    RestockingWindow *m_RestockWindow;
 
     QTableWidget *tableWidget;
 
@@ -102,6 +110,8 @@ private:
     QSettings* p_settings;
 
     DataBase database;
+
+    QTableWidget *p_tableBuyed;
 };
 
 #endif // SETTINGSWINDOW_H

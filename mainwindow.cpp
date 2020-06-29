@@ -9,6 +9,7 @@
 
 #include "ServoRegisters.h"
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -21,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Создаем окно настроек
     m_settingsWindow = new SettingsWindow(this);
+    m_settingsWindow->LoadBuyedList(ui->tableBuyed);
 
     connect(m_settingsWindow, &SettingsWindow::ReadModbusSignal, this, &MainWindow::ReadModbusRequest);
     connect(m_settingsWindow, &SettingsWindow::WriteModbusSignal, this, &MainWindow::WriteModbusRequest);
@@ -114,6 +116,50 @@ void MainWindow::ConnectToTCP()
 {
     p_TcpClient->Connect(m_settingsWindow->settings().TcpIP, m_settingsWindow->settings().TcpPort);
 }
+
+void MainWindow::Power()
+{
+    quint16 pwr = 0x0000;
+
+    if(ui->actionPower->text() == "Включить")
+    {
+        SetBit(pwr,1,0);
+        QVector<Servoline>::iterator iter= servo_array.begin();
+        for (;iter!=servo_array.end();++iter)
+        {
+            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
+            ReadModbusRequest(iter->ServoAddres, PA508,1);
+        }
+    }
+    else
+    {
+        SetBit(pwr,0,0);
+        QVector<Servoline>::iterator iter= servo_array.begin();
+        for (;iter!=servo_array.end();++iter)
+        {
+            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
+            ReadModbusRequest(iter->ServoAddres, PA508,1);
+        }
+    }
+}
+//--------------------------------------------------------------------------------------------------------------
+void MainWindow::SHome()
+{
+    quint16 init = 0x0001; //!!!
+
+    QVector<Servoline>::iterator iter= servo_array.begin();
+    for (;iter!=servo_array.end();++iter)
+    {
+        SetBit(init,1,1);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+        SetBit(init,0,1);
+        WriteModbusRequest(iter->ServoAddres, PA508,init);
+    }
+
+
+    ui->actionSHome->setEnabled(false);
+    timerIsHome->start(200);
+}
 //------------------------------------------------------------------------------------------------------------
 void MainWindow::ConnectToPort()
 {
@@ -152,9 +198,6 @@ void MainWindow::ConnectToPort()
 
 void MainWindow::ReadModbusRequest(int Server, int RegistrAddres, quint16 size)
 {
-    if(Server == 1 && !ui->checkAxisX->isChecked()) return;
-    if(Server == 2 && !ui->checkAxisY->isChecked()) return;
-
     if (!modbusDevice)
         return;
 
@@ -184,6 +227,11 @@ void MainWindow::initActions()
             this, &MainWindow::ConnectToPort);
     connect(ui->actionDisconnect, &QAction::triggered,
             this, &MainWindow::ConnectToPort);
+
+    connect(ui->actionPower, &QAction::triggered,
+            this, &MainWindow::Power);
+    connect(ui->actionSHome, &QAction::triggered,
+            this, &MainWindow::SHome);
 
 
     connect(ui->actionConnectTCP, &QAction::triggered,
@@ -246,8 +294,6 @@ void MainWindow::MovePoint(int X, int Y)
         SetBit(init,0,2);
         WriteModbusRequest(iter->ServoAddres, PA508,init);
     }
-
-
 }
 //----------------------------------------------------------------------
 quint8 CheckBit(quint8 byte, int index)
@@ -263,30 +309,12 @@ void MainWindow::Check_dP13(int ServoAddres, quint16 value)
     if(CheckBit(value,2) ) FindServo(ServoAddres)->MC_OK = true;
     else FindServo(ServoAddres)->MC_OK = false;
 
-    if(FindServo(1)->MC_OK && FindServo(2)->MC_OK && StateManager.GetState() == State::MOVE)
-    {
-        switch (StateManager.GetOldState())
-        {
-        case State::FIND:
-            StateManager.SetState(State::GATHER);
-            break;
-        case State::FIND_CASHBOX:
-            StateManager.SetState(State::DROP);
-            break;
-        default:
-            qDebug() << "Check_dP13 Error";
-            break;
-        }
-    }
-
-
     if(CheckBit(value,1))
     {
         FindServo(ServoAddres)->isHome = true;
-        if((FindServo(1)->isHome || !ui->checkAxisX->isChecked()) &&
-                (FindServo(2)->isHome || !ui->checkAxisY->isChecked()))
+        if(FindServo(1)->isHome && FindServo(2)->isHome)
         {
-            ui->SHomeButton->setEnabled(true);
+            ui->actionSHome->setEnabled(true);
             timerIsHome->stop();
         }
     }
@@ -301,6 +329,12 @@ void MainWindow::TaskTimerSlot()
         {
         case State::FIND:
         {
+            if(p_TcpClient->TaskList[0].CodeList.count() == 0)
+            {
+                StateManager.SetState(State::FIND_CASHBOX);
+                return;
+            }
+
             CurrentCell.ProductCode = p_TcpClient->TaskList[0].CodeList[0];
             // Найти в базе данных
 
@@ -316,9 +350,27 @@ void MainWindow::TaskTimerSlot()
             break;
         }
         case State::MOVE:
+        {
             SendRead_dP13();
+
+            if(FindServo(1)->MC_OK && FindServo(2)->MC_OK)
+            {
+                switch (StateManager.GetOldState())
+                {
+                case State::FIND:
+                    StateManager.SetState(State::GATHER);
+                    break;
+                case State::FIND_CASHBOX:
+                    StateManager.SetState(State::DROP);
+                    break;
+                default:
+                    qDebug() << "Check_dP13 Error";
+                    break;
+                }
+            }
             qDebug() << "Move to - " << CurrentCell.ProductCode;
             break;
+        }
         case State::GATHER:
         {
             qDebug() << "GATHER to - " << CurrentCell.ProductCode;
@@ -371,21 +423,20 @@ void MainWindow::ProcessPA508(int ServoAddres, quint16 value)
 
     FindServo(ServoAddres)->isPower = bool(DI[0]);
 
-    if((FindServo(1)->isPower || !ui->checkAxisX->isChecked()) &&
-            (FindServo(2)->isPower || !ui->checkAxisY->isChecked())) // Питание включено
+    if(FindServo(1)->isPower && FindServo(2)->isPower) // Питание включено
     {
-        ui->PowerButton->setText("Отключить");
-        ui->PowerButton->setIcon(QIcon(":/images/powerOff.png"));
+        ui->actionPower->setText("Отключить");
+        ui->actionPower->setIcon(QIcon(":/images/powerOff.png"));
     }
     else
     {
-        ui->PowerButton->setText("Включить");
-        ui->PowerButton->setIcon(QIcon(":/images/power.png"));
+        ui->actionPower->setText("Включить");
+        ui->actionPower->setIcon(QIcon(":/images/power.png"));
     }
 
-    if(!ui->SHomeButton->isEnabled())
+    if(!ui->actionSHome->isEnabled())
     {
-        ui->SHomeButton->setEnabled(true);
+        ui->actionSHome->setEnabled(true);
         timerIsHome->stop();
     }
 }
@@ -473,11 +524,9 @@ void  MainWindow::WriteIntModbusRequest(int Server, int RegistrAddres, qint32 va
 //---------------------------------------------------------------------------------------------------------------
 void  MainWindow::WriteModbusRequest(int Server, int RegistrAddres, quint16 value)
 {
-    if(Server == 1 && !ui->checkAxisX->isChecked()) return;
-    if(Server == 2 && !ui->checkAxisY->isChecked()) return;
-
     if (!modbusDevice)
         return;
+
     statusBar()->clearMessage();
 
     const auto table = static_cast<QModbusDataUnit::RegisterType> (4);
@@ -517,7 +566,7 @@ void  MainWindow::WriteModbus(int Server, QModbusDataUnit writeUnit)
     }
 }
 //----------------------------------------------------------------------------------------------------------------
-void MainWindow::RunTaskSlot(int cashbox, int list)
+void MainWindow::RunTaskSlot()
 {
     if(!TaskTimer->isActive())
     {
@@ -534,73 +583,7 @@ void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
         value &=~(1<<index*4);
 }
 
-void MainWindow::on_PowerButton_clicked()
-{
-    quint16 pwr = 0x0000;
-
-    if(ui->PowerButton->text() == "Включить")
-    {
-        SetBit(pwr,1,0);
-        QVector<Servoline>::iterator iter= servo_array.begin();
-        for (;iter!=servo_array.end();++iter)
-        {
-            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
-            ReadModbusRequest(iter->ServoAddres, PA508,1);
-        }
-    }
-    else
-    {
-        SetBit(pwr,0,0);
-        QVector<Servoline>::iterator iter= servo_array.begin();
-        for (;iter!=servo_array.end();++iter)
-        {
-            WriteModbusRequest(iter->ServoAddres, PA508,pwr);
-            ReadModbusRequest(iter->ServoAddres, PA508,1);
-        }
-    }
-}
-
-void MainWindow::on_SHomeButton_clicked()
-{
-    quint16 init = 0x0001; //!!!
-
-    QVector<Servoline>::iterator iter= servo_array.begin();
-    for (;iter!=servo_array.end();++iter)
-    {
-        SetBit(init,1,1);
-        WriteModbusRequest(iter->ServoAddres, PA508,init);
-        SetBit(init,0,1);
-        WriteModbusRequest(iter->ServoAddres, PA508,init);
-    }
-
-
-    ui->SHomeButton->setEnabled(false);
-    timerIsHome->start(200);
-}
-
 void MainWindow::on_pushButton_clicked()
 {
     p_TcpClient->SendServerResponse();
-}
-
-void MainWindow::on_pushButton_2_clicked()
-{
-    /*
-    TcpClient::Task task;
-    task.Cashbox = 1;
-
-    task.CodeList.push_back(23431);
-    task.CodeList.push_back(234131);
-    task.CodeList.push_back(234312);
-
-    p_TcpClient->TaskList.push_back(task);
-
-    task.Cashbox = 2;
-    p_TcpClient->TaskList.push_back(task);
-
-    ///////////////////////////////////////
-    RunTaskSlot(0,0);
-    */
-
-    //m_settingsWindow->DecreaseCount(228228);
 }

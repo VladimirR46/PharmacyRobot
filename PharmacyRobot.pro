@@ -28,6 +28,7 @@ SOURCES += \
     jogwindow.cpp \
     main.cpp \
     mainwindow.cpp \
+    restockingwindow.cpp \
     servoline.cpp \
     settingswindow.cpp \
     tcpclient.cpp
@@ -38,6 +39,7 @@ HEADERS += \
     database.h \
     jogwindow.h \
     mainwindow.h \
+    restockingwindow.h \
     servoline.h \
     settingswindow.h \
     tcpclient.h
@@ -46,6 +48,7 @@ FORMS += \
     cellsettingswindow.ui \
     jogwindow.ui \
     mainwindow.ui \
+    restockingwindow.ui \
     settingswindow.ui
 
 # Default rules for deployment.
