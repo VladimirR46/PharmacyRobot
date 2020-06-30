@@ -5,12 +5,15 @@
 #include <QDebug>
 #include <stdio.h>
 #include <windows.h>
+#include "settingswindow.h"
+#include <QElapsedTimer>
+#include <QTimer>
 
 class CartDrugs : public QObject
 {
     Q_OBJECT
 public:
-    explicit CartDrugs(QObject *parent = nullptr);
+    explicit CartDrugs(SettingsWindow *settingsWindow, QObject *parent = nullptr);
     ~CartDrugs();
 
     HANDLE openPort(const char * portName, unsigned int baudRate);
@@ -20,16 +23,38 @@ public:
     bool SetTarget(int id, int target);
     int GetPosition(int id);
 
+    void OpenCart();    // Открыть корзину
+    void CloseCart();   // Закрыть корзину
+
+    void UpGrip();
+    void DownGrip();
+
+    bool Gather(); // Собрать
+    bool Drop();
+
 public slots:
     void ConnectCart();
     void DisconnectCart();
 
+    void GatherTimeout();
+    void DropTimeout();
+
 private:
     HANDLE port;
-    char * portName;
+    QString portName;
     int baudRate;
     BOOL success;
     unsigned short target, position;
+
+    SettingsWindow *p_settingsWindow;
+
+    QTimer* GatherTimer;
+    QTimer* DropTimer;
+
+    bool isGather = false;
+    bool isDrop = false;
+    bool isDownGripActive = false;
+    bool isCloseCartActive = false;
 };
 
 #endif // CARTDRUGS_H

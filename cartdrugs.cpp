@@ -1,8 +1,15 @@
 #include "cartdrugs.h"
 
-CartDrugs::CartDrugs(QObject *parent) : QObject(parent)
+CartDrugs::CartDrugs(SettingsWindow *settingsWindow, QObject *parent) : QObject(parent)
 {
+    p_settingsWindow = settingsWindow;
 
+
+    GatherTimer = new QTimer();
+    connect(GatherTimer, SIGNAL(timeout()), this, SLOT(GatherTimeout()));
+
+    DropTimer = new QTimer();
+    connect(DropTimer, SIGNAL(timeout()), this, SLOT(DropTimeout()));
 }
 
 CartDrugs::~CartDrugs()
@@ -198,6 +205,89 @@ int CartDrugs::GetPosition(int id)
     return (position-3600)/40;
 }
 
+void CartDrugs::OpenCart()
+{
+    SetTarget(0,p_settingsWindow->settings().OpenCartAngle);
+}
+
+void CartDrugs::CloseCart()
+{
+    SetTarget(0,p_settingsWindow->settings().CloseCartAngle);
+}
+
+void CartDrugs::UpGrip()
+{
+    SetTarget(1,p_settingsWindow->settings().UpCartAngle);
+}
+
+void CartDrugs::DownGrip()
+{
+    SetTarget(1,p_settingsWindow->settings().DownCartAngle);
+}
+//------------------------------------------------------------------------
+void CartDrugs::GatherTimeout()
+{
+    if(!isDownGripActive)
+    {
+       DownGrip();
+       isDownGripActive = true;
+    }
+    else
+    {
+        isDownGripActive = false;
+        isGather = true;
+        GatherTimer->stop();
+    }
+}
+//------------------------------------------------------------------------
+void CartDrugs::DropTimeout()
+{
+    if(!isCloseCartActive)
+    {
+       CloseCart();
+       isCloseCartActive = true;
+    }
+    else
+    {
+        isCloseCartActive = false;
+        isDrop = true;
+        DropTimer->stop();
+    }
+}
+//------------------------------------------------------------------------
+bool CartDrugs::Gather()
+{
+    if(!GatherTimer->isActive() && !isGather)
+    {
+        UpGrip();
+        GatherTimer->start(400);
+    }
+
+    if(isGather)
+    {
+       isGather = false;
+       return true;
+    }
+
+    return false;
+}
+//------------------------------------------------------------------------
+bool CartDrugs::Drop()
+{
+    if(!DropTimer->isActive() && !isDrop)
+    {
+        OpenCart();
+        DropTimer->start(400);
+    }
+
+    if(isDrop)
+    {
+       isDrop = false;
+       return true;
+    }
+    return false;
+}
+//------------------------------------------------------------------------
 void CartDrugs::ConnectCart()
 {
     /* portName should be the name of the Maestro's Command Port (e.g. "COM4")
@@ -205,7 +295,7 @@ void CartDrugs::ConnectCart()
          * Alternatively you can use \\.\USBSER000 to specify the first virtual COM
          * port that uses the usbser.sys driver.  This will usually be the Maestro's
          * command port. */
-        portName = "\\\\.\\COM20"; //"\\\\.\\USBSER000";  // Each double slash in this source code represents one slash in the actual name.
+        portName = "\\\\.\\COM"+QString::number(p_settingsWindow->settings().CartPort); //"\\\\.\\USBSER000";  // Each double slash in this source code represents one slash in the actual name.
         //portName = "\\\\.\\USBSER000"; //"\\\\.\\USBSER000";
 
         /* Choose the baud rate (bits per second).
@@ -215,7 +305,7 @@ void CartDrugs::ConnectCart()
         qDebug() << "Connected.....";
 
         /* Open the Maestro's serial port. */
-        port = openPort(portName, baudRate);
+        port = openPort(portName.toStdString().c_str(), baudRate);
         if (port == INVALID_HANDLE_VALUE) return;
         qDebug() << "CartDrugs connected";
 

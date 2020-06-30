@@ -97,6 +97,15 @@
           <normaloff>:/images/telejka-128x128.png</normaloff>:/images/telejka-128x128.png</iconset>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Корзина</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resource.qrc">
+          <normaloff>:/images/photo_2020-06-30_01-28-04.jpg</normaloff>:/images/photo_2020-06-30_01-28-04.jpg</iconset>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="1">
@@ -105,7 +114,7 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page">
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -140,7 +149,7 @@
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
-             <string>Настройки</string>
+             <string>Servoline</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_2">
              <item row="1" column="1">
@@ -385,6 +394,37 @@
                 </property>
                 <property name="value">
                  <number>4442</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+           <widget class="QWidget" name="tab_3">
+            <attribute name="title">
+             <string>Корзина</string>
+            </attribute>
+            <widget class="QWidget" name="layoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>21</x>
+               <y>11</y>
+               <width>101</width>
+               <height>22</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="QLabel" name="label_17">
+                <property name="text">
+                 <string>Port:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinCartPort">
+                <property name="prefix">
+                 <string>COM:</string>
                 </property>
                </widget>
               </item>
@@ -642,6 +682,104 @@
           </item>
          </layout>
         </widget>
+       </widget>
+       <widget class="QWidget" name="page_3">
+        <layout class="QGridLayout" name="gridLayout_6">
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="groupBox_4">
+           <property name="title">
+            <string>Параметры створки</string>
+           </property>
+           <widget class="QWidget" name="layoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>20</y>
+              <width>201</width>
+              <height>48</height>
+             </rect>
+            </property>
+            <layout class="QFormLayout" name="formLayout_4">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_18">
+               <property name="text">
+                <string>Угол открытия:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSpinBox" name="spinOpenAngle">
+               <property name="maximum">
+                <number>180</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_19">
+               <property name="text">
+                <string>Угол закрытия:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinCloseAngle">
+               <property name="maximum">
+                <number>180</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="title">
+            <string>Параметры схвата</string>
+           </property>
+           <widget class="QWidget" name="layoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>20</y>
+              <width>201</width>
+              <height>48</height>
+             </rect>
+            </property>
+            <layout class="QFormLayout" name="formLayout_5">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_20">
+               <property name="text">
+                <string>Угол подъема:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSpinBox" name="spinUpAngle">
+               <property name="maximum">
+                <number>180</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_21">
+               <property name="text">
+                <string>Угол опускания:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinDownAngle">
+               <property name="maximum">
+                <number>180</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>

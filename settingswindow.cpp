@@ -122,6 +122,45 @@ void SettingsWindow::LoadBuyedList(QTableWidget *tableBuyed)
     }
 }
 
+void SettingsWindow::UpdateBuyedList()
+{
+    database.buyed_model->setFilter("");
+    database.buyed_model->select();
+    int row = database.buyed_model->rowCount();
+    p_tableBuyed->setRowCount(row);
+    for(int i = 0; i < row; i++)
+    {
+        QSqlRecord record = database.buyed_model->record(i);
+        int productcode = record.value("productcode").toInt();
+        int buyed_count = record.value("count").toInt();
+
+        DataBase::Cell cell;
+        database.GetCell(cell, productcode);
+
+        QTableWidgetItem *item = p_tableBuyed->item(i,0);
+        if (!item)
+        {
+            p_tableBuyed->setItem(i,0,new QTableWidgetItem(QString::number(cell.Box+1)));
+            p_tableBuyed->setItem(i,1,new QTableWidgetItem(QString::number(cell.Line+1)));
+            p_tableBuyed->setItem(i,2,new QTableWidgetItem(QString::number(cell.Cell+1)));
+            p_tableBuyed->setItem(i,3,new QTableWidgetItem(QString::number(cell.ProductCode)));
+            p_tableBuyed->setItem(i,4,new QTableWidgetItem(cell.Name));
+            p_tableBuyed->setItem(i,5,new QTableWidgetItem(QString::number(cell.Count)));
+            p_tableBuyed->setItem(i,6,new QTableWidgetItem(QString::number(buyed_count)));
+        }
+        else
+        {
+            p_tableBuyed->item(i,0)->setText(QString::number(cell.Box+1));
+            p_tableBuyed->item(i,1)->setText(QString::number(cell.Line+1));
+            p_tableBuyed->item(i,2)->setText(QString::number(cell.Cell+1));
+            p_tableBuyed->item(i,3)->setText(QString::number(cell.ProductCode));
+            p_tableBuyed->item(i,4)->setText(cell.Name);
+            p_tableBuyed->item(i,5)->setText(QString::number(cell.Count));
+            p_tableBuyed->item(i,6)->setText(QString::number(buyed_count));
+        }
+    }
+}
+
 SettingsWindow::~SettingsWindow()
 {
     delete p_settings;
@@ -303,6 +342,13 @@ void SettingsWindow::SaveSettingsToStruct()
     m_settings.cashbox[0].Y = ui->spinBox1Y->value();
     m_settings.cashbox[1].X = ui->spinBox2X->value();
     m_settings.cashbox[1].Y = ui->spinBox2Y->value();
+
+    m_settings.OpenCartAngle = ui->spinOpenAngle->value();
+    m_settings.CloseCartAngle = ui->spinCloseAngle->value();
+    m_settings.UpCartAngle = ui->spinUpAngle->value();
+    m_settings.DownCartAngle = ui->spinDownAngle->value();
+
+    m_settings.CartPort = ui->spinCartPort->value();
 }
 
 void SettingsWindow::RestockedCell(int row, int count)
@@ -352,6 +398,13 @@ void SettingsWindow::saveSettings()
     p_settings->setValue("Cashbox2X",ui->spinBox2X->value());
     p_settings->setValue("Cashbox2Y",ui->spinBox2Y->value());
 
+    p_settings->setValue("OpenCartAngle",ui->spinOpenAngle->value());
+    p_settings->setValue("CloseCartAngle",ui->spinCloseAngle->value());
+    p_settings->setValue("UpCartAngle",ui->spinUpAngle->value());
+    p_settings->setValue("DownCartAngle",ui->spinDownAngle->value());
+
+    p_settings->setValue("CartPort",ui->spinCartPort->value());
+
     SaveSettingsToStruct();
 
     // Сохраняем базу данных
@@ -377,6 +430,13 @@ void SettingsWindow::loadSettings()
     ui->spinBox1Y->setValue(p_settings->value("Cashbox1Y",0).toInt());
     ui->spinBox2X->setValue(p_settings->value("Cashbox2X",0).toInt());
     ui->spinBox2Y->setValue(p_settings->value("Cashbox2Y",0).toInt());
+
+    ui->spinOpenAngle->setValue(p_settings->value("OpenCartAngle",0).toInt());
+    ui->spinCloseAngle->setValue(p_settings->value("CloseCartAngle",0).toInt());
+    ui->spinUpAngle->setValue(p_settings->value("UpCartAngle",0).toInt());
+    ui->spinDownAngle->setValue(p_settings->value("DownCartAngle",0).toInt());
+
+    ui->spinCartPort->setValue(p_settings->value("CartPort").toInt());
 
     SaveSettingsToStruct();
 

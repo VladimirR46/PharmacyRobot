@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
     TaskTimer = new QTimer();
     connect(TaskTimer, SIGNAL(timeout()), this, SLOT(TaskTimerSlot()));
 
-    p_CartDrugs = new CartDrugs(this);
+    p_CartDrugs = new CartDrugs(m_settingsWindow, this);
 
     initActions();
 }
@@ -68,7 +68,6 @@ void MainWindow::ServoInitialization()
 
 
     m_settingsWindow->initServo(&servo_array);
-
 }
 
 // Реализация слота
@@ -380,16 +379,15 @@ void MainWindow::TaskTimerSlot()
         {
             qDebug() << "GATHER to - " << CurrentCell.ProductCode;
 
-            m_settingsWindow->DecreaseProductCount(CurrentCell); // Уменьшаем значение на 1
+            if(p_CartDrugs->Gather())
+            {
+                m_settingsWindow->DecreaseProductCount(CurrentCell); // Уменьшаем значение на 1
+                // Удаляем код из списка
+                p_TcpClient->TaskList[0].CodeList.remove(0);
 
-            int n = QMessageBox::warning(0,"Warning","GATHER?","Yes","No",QString(),0,1);
-
-            // Удаляем код из списка
-            p_TcpClient->TaskList[0].CodeList.remove(0);
-
-            if(p_TcpClient->TaskList[0].CodeList.count() > 0) StateManager.SetState(State::FIND);
-            else StateManager.SetState(State::FIND_CASHBOX);
-
+                if(p_TcpClient->TaskList[0].CodeList.count() > 0) StateManager.SetState(State::FIND);
+                else StateManager.SetState(State::FIND_CASHBOX);
+            }
             break;
         }
         case State::FIND_CASHBOX:
@@ -403,13 +401,15 @@ void MainWindow::TaskTimerSlot()
         case State::DROP:
             qDebug() << "DROP to All";
 
-            // Удаляем задачу
-            p_TcpClient->TaskList.remove(0);
+            if(p_CartDrugs->Drop())
+            {
+                m_settingsWindow->UpdateBuyedList();
+                // Удаляем задачу
+                p_TcpClient->TaskList.remove(0);
 
-            if(p_TcpClient->TaskList.count() == 0) StateManager.SetState(State::EMPTY);
-            else StateManager.SetState(State::FIND);
-
-
+                if(p_TcpClient->TaskList.count() == 0) StateManager.SetState(State::EMPTY);
+                else StateManager.SetState(State::FIND);
+            }
             break;
         default:
             qDebug() << "State not found";

@@ -33,6 +33,7 @@ public:
     void DecreaseProductCount(DataBase::Cell& cell);
 
     void LoadBuyedList(QTableWidget *tableBuyed);
+    void UpdateBuyedList();
 
     struct Cashbox
     {
@@ -54,6 +55,12 @@ public:
 
         Cashbox cashbox[2];
 
+        int OpenCartAngle = 0;
+        int CloseCartAngle = 0;
+        int UpCartAngle = 0;
+        int DownCartAngle = 0;
+
+        int CartPort = 0;
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
