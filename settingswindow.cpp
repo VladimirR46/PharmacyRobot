@@ -687,3 +687,13 @@ void SettingsWindow::on_pushButton_clicked()
     }
 
 }
+//---------------------------------------------------------------------
+void SettingsWindow::on_Update1Button_clicked()
+{
+    emit GetCurrentPosSignal(ui->spinBox1X, ui->spinBox1Y);
+}
+
+void SettingsWindow::on_Update2Button_clicked()
+{
+    emit GetCurrentPosSignal(ui->spinBox2X, ui->spinBox2Y);
+}

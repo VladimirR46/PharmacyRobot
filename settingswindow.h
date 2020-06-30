@@ -28,6 +28,7 @@ class SettingsWindow : public QDialog
     Q_OBJECT
 
 public:
+    CellSettingsWindow* m_cellSettingsWindow;
 
     bool FindProduct(DataBase::Cell& cell, int productCode);
     void DecreaseProductCount(DataBase::Cell& cell);
@@ -84,6 +85,7 @@ public:
 signals:
         void  WriteModbusSignal(int Server, int RegistrAddres, quint16 value);
         void  ReadModbusSignal(int Server, int RegistrAddres, quint16 size); // Прочитать N регистров
+        void  GetCurrentPosSignal(QWidget* X, QWidget* Y);
 
 
 private slots:
@@ -102,10 +104,13 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_Update1Button_clicked();
+
+    void on_Update2Button_clicked();
+
 private:
     Settings m_settings;
     Ui::SettingsWindow *ui;
-    CellSettingsWindow* m_cellSettingsWindow;
     RestockingWindow *m_RestockWindow;
 
     QTableWidget *tableWidget;

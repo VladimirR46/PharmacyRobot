@@ -20,8 +20,8 @@ void CellSettingsWindow::ShowSettings(DataBase& db, int box_, int line_, int cel
         ui->NameEdit->setText(cell.Name);
         ui->ProductCodeEdit->setText(QString::number(cell.ProductCode));
         ui->CountSpin->setValue(cell.Count);
-        ui->XEdit->setText(QString::number(cell.X));
-        ui->YEdit->setText(QString::number(cell.Y));
+        ui->spinX->setValue(cell.X);
+        ui->spinY->setValue(cell.Y);
 
         show();
     }
@@ -38,10 +38,15 @@ void CellSettingsWindow::on_SaveButton_clicked()
     cell.Name = ui->NameEdit->text();
     cell.ProductCode = ui->ProductCodeEdit->text().toInt();
     cell.Count = ui->CountSpin->value();
-    cell.X = ui->XEdit->text().toInt();
-    cell.Y = ui->YEdit->text().toInt();
+    cell.X = ui->spinX->value();
+    cell.Y = ui->spinY->value();
 
     emit SaveCellConfig(cell);
 
     hide();
+}
+
+void CellSettingsWindow::on_CurrPosButton_clicked()
+{
+    emit GetCurrentPosSignal(ui->spinX, ui->spinY);
 }

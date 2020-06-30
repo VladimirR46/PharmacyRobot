@@ -22,8 +22,12 @@ public:
 private slots:
     void on_SaveButton_clicked();
 
+    void on_CurrPosButton_clicked();
+
 signals:
     void  SaveCellConfig(DataBase::Cell& cell);
+    void  GetCurrentPosSignal(QWidget* X, QWidget* Y);
+
 
 private:
     Ui::CellSettingsWindow *ui;

@@ -88,6 +88,8 @@ private:
     void WritePoint(int X, int Y);
     void MovePoint(int X, int Y);
     void Check_dP13(int ServoAddres, quint16 value);
+    void GetCurrentPos(QWidget* X, QWidget* Y);
+    void Process_dP01(int ServoAddres, int value);
 
     QVector<Servoline>::iterator FindServo(int ServoAddres); // Поиск обьекта сервы по адресу в массиве
 
@@ -129,8 +131,6 @@ private:
     SettingsWindow *m_settingsWindow;
     JOGWindow *m_jogWindow;
 
-
-
     QModbusReply *lastRequest;
     QModbusClient *modbusDevice;
 
@@ -138,6 +138,9 @@ private:
 
     QTimer *timerIsHome;
     QTimer *TaskTimer;
+
+    QWidget* CurrentPosX;
+    QWidget* CurrentPosY;
 
 };
 #endif // MAINWINDOW_H

@@ -315,5 +315,6 @@ void CartDrugs::DisconnectCart()
 {
     /* Close the serial port so other programs can use it.
      * Alternatively, you can just terminate the process (return from main). */
-    CloseHandle(port);
+    if(port) CloseHandle(port);
+
 }

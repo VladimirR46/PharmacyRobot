@@ -5,6 +5,7 @@
 
 #include <QModbusRtuSerialMaster>
 #include <QVector>
+#include <QSpinBox>
 #include <QMessageBox>
 
 #include "ServoRegisters.h"
@@ -26,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_settingsWindow, &SettingsWindow::ReadModbusSignal, this, &MainWindow::ReadModbusRequest);
     connect(m_settingsWindow, &SettingsWindow::WriteModbusSignal, this, &MainWindow::WriteModbusRequest);
+    connect(m_settingsWindow, &SettingsWindow::GetCurrentPosSignal, this, &MainWindow::GetCurrentPos);
+    connect(m_settingsWindow->m_cellSettingsWindow, &CellSettingsWindow::GetCurrentPosSignal, this, &MainWindow::GetCurrentPos);
 
     m_jogWindow = new JOGWindow(this);
     connect(m_jogWindow, SIGNAL(JOGSignal(int,int)), this, SLOT(JOGSlot(int,int)));
@@ -242,7 +245,12 @@ void MainWindow::initActions()
             this, &MainWindow::ConnectToTCP);
 
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
-    connect(ui->actionSettings, &QAction::triggered, m_settingsWindow, &QDialog::show);
+    //connect(ui->actionSettings, &QAction::triggered, m_settingsWindow, &QDialog::show);
+    connect(ui->actionSettings, &QAction::triggered, [this]() {
+        m_settingsWindow->LoadDatabase();
+        m_settingsWindow->show();
+    });
+
     connect(ui->actionJOG, &QAction::triggered, m_jogWindow, &QDialog::show);
 }
 //---------------------------------------------------------------------------------------------------------------------
@@ -323,6 +331,29 @@ void MainWindow::Check_dP13(int ServoAddres, quint16 value)
         }
     }
     else FindServo(ServoAddres)->isHome = false;
+}
+
+void MainWindow::GetCurrentPos(QWidget* X, QWidget* Y)
+{
+    CurrentPosX = X;
+    CurrentPosY = Y;
+    ReadModbusRequest(1, dP01,2);
+    ReadModbusRequest(2, dP01,2);
+}
+//---------------------------------------------------------------------------------
+void MainWindow::Process_dP01(int ServoAddres, int value)
+{
+    if(ServoAddres == 1)
+    {
+        QSpinBox* sb = static_cast<QSpinBox *>(CurrentPosX);
+        if(sb) sb->setValue(value);
+    }
+
+    if(ServoAddres == 2)
+    {
+        QSpinBox* sb = static_cast<QSpinBox *>(CurrentPosY);
+        if(sb) sb->setValue(value);
+    }
 }
 //---------------------------------------------------------------------------------
 void MainWindow::TaskTimerSlot()
@@ -470,8 +501,8 @@ void MainWindow::readReady()
         case PA306:
           m_jogWindow->SetJOGSpeed(unit.value(0));
           break;
-        case dP01:
-          //ui->CurrPosEdit->setText(QString::number(GetEncoderFeedback(unit)));
+        case dP01: // Текущее положение двигателей
+          Process_dP01(reply->serverAddress(),GetEncoderFeedback(unit));
           break;
         case PA701:
             //ui->Point0Edit->setText(QString::number(uint16_To_int32(unit.value(1),unit.value(0)),10));
