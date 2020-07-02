@@ -623,14 +623,3 @@ void MainWindow::on_pushButton_clicked()
 {
     p_TcpClient->SendServerResponse();
 }
-
-void MainWindow::on_pushButton_3_clicked()
-{
-  p_CartDrugs->SetTarget(1,ui->lineEdit->text().toInt());
-}
-
-void MainWindow::on_pushButton_2_clicked()
-{
-    ui->label_2->setText(QString::number(p_CartDrugs->GetPosition(1)));
-
-}
