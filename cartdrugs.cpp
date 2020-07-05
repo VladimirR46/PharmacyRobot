@@ -260,7 +260,7 @@ bool CartDrugs::Gather()
     if(!GatherTimer->isActive() && !isGather)
     {
         UpGrip();
-        GatherTimer->start(400);
+        GatherTimer->start(p_settingsWindow->settings().dTimeUpDown);
     }
 
     if(isGather)
@@ -277,7 +277,7 @@ bool CartDrugs::Drop()
     if(!DropTimer->isActive() && !isDrop)
     {
         OpenCart();
-        DropTimer->start(400);
+        DropTimer->start(p_settingsWindow->settings().dTimeOpenClose);
     }
 
     if(isDrop)

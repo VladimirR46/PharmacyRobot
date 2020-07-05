@@ -62,6 +62,9 @@ public:
         int DownCartAngle = 0;
 
         int CartPort = 0;
+
+        int dTimeOpenClose = 400;
+        int dTimeUpDown = 400;
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();

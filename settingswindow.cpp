@@ -348,6 +348,9 @@ void SettingsWindow::SaveSettingsToStruct()
     m_settings.UpCartAngle = ui->spinUpAngle->value();
     m_settings.DownCartAngle = ui->spinDownAngle->value();
 
+    m_settings.dTimeUpDown = ui->spinTimeUpDown->value();
+    m_settings.dTimeOpenClose = ui->spinTimeOpenClose->value();
+
     m_settings.CartPort = ui->spinCartPort->value();
 }
 
@@ -405,6 +408,9 @@ void SettingsWindow::saveSettings()
 
     p_settings->setValue("CartPort",ui->spinCartPort->value());
 
+    p_settings->setValue("dTimeUpDown",ui->spinTimeUpDown->value());
+    p_settings->setValue("dTimeOpenClose",ui->spinTimeOpenClose->value());
+
     SaveSettingsToStruct();
 
     // Сохраняем базу данных
@@ -437,6 +443,9 @@ void SettingsWindow::loadSettings()
     ui->spinDownAngle->setValue(p_settings->value("DownCartAngle",0).toInt());
 
     ui->spinCartPort->setValue(p_settings->value("CartPort").toInt());
+
+    ui->spinTimeUpDown->setValue(p_settings->value("dTimeUpDown").toInt());
+    ui->spinTimeOpenClose->setValue(p_settings->value("dTimeOpenClose").toInt());
 
     SaveSettingsToStruct();
 
