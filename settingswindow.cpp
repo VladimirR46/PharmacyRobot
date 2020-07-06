@@ -543,8 +543,8 @@ void SettingsWindow::ClickBuyed(int row, int col)
         }
     }
 
-    emit ledONSignal(box, id);
-    m_RestockWindow->ShowRestock(row, p_tableBuyed->item(row,6)->text().toInt());
+    emit ledONSignal(box, id-1);
+    m_RestockWindow->ShowRestock(row, p_tableBuyed->item(row,6)->text().toInt(),box,id-1);
 }
 //----------------------------------------------------------------------
 void SettingsWindow::LoadDatabase()

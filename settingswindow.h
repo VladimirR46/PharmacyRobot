@@ -29,6 +29,7 @@ class SettingsWindow : public QDialog
 
 public:
     CellSettingsWindow* m_cellSettingsWindow;
+    RestockingWindow *m_RestockWindow;
 
     bool FindProduct(DataBase::Cell& cell, int productCode);
     void DecreaseProductCount(DataBase::Cell& cell);
@@ -118,8 +119,6 @@ private slots:
 private:
     Settings m_settings;
     Ui::SettingsWindow *ui;
-    RestockingWindow *m_RestockWindow;
-
     QTableWidget *tableWidget;
 
     QVector<Servoline>* servo_array;

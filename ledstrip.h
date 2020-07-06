@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QtSerialPort>
+#include <QTimer>
 #include "settingswindow.h"
 
 
@@ -14,11 +15,8 @@ public:
 
     explicit LEDStrip(SettingsWindow *settingsWindow, QWidget *parent = nullptr);
 
-
-
-
-    void SendMessage(int box, int index, int state);
-
+    unsigned short message[4];
+    void SendMessage();
 
 
 public slots:
@@ -26,6 +24,7 @@ public slots:
     void SerialReadyRead();
     void ledON(int box, int id);
     void ledOFF(int box, int id);
+    void SendTimeout();
 
 
 signals:
@@ -33,7 +32,11 @@ signals:
 private:
     QSerialPort* serial;
 
+    QTimer* sendTimer;
+
     SettingsWindow *p_settingsWindow;
+
+    int TryCount = 0;
 
 };
 

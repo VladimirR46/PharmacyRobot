@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     p_LedStrip = new LEDStrip(m_settingsWindow);
     connect(m_settingsWindow, &SettingsWindow::ledONSignal, p_LedStrip, &LEDStrip::ledON);
-    connect(m_settingsWindow, &SettingsWindow::ledOFFSignal, p_LedStrip, &LEDStrip::ledOFF);
+    connect(m_settingsWindow->m_RestockWindow, &RestockingWindow::ledOFFSignal, p_LedStrip, &LEDStrip::ledOFF);
 
     initActions();
 }

@@ -6,6 +6,10 @@ LEDStrip::LEDStrip(SettingsWindow *settingsWindow, QWidget *parent) : QWidget(pa
 
     serial = new QSerialPort(this);
     connect(serial, SIGNAL(readyRead()), this, SLOT(SerialReadyRead()));
+
+
+    sendTimer = new QTimer();
+    connect(sendTimer, SIGNAL(timeout()), this, SLOT(SendTimeout()));
 }
 
 unsigned short Crc16(unsigned char *pcBlock, unsigned short len)
@@ -39,36 +43,58 @@ bool LEDStrip::Connect()
     else return false;
 }
 
-void LEDStrip::SendMessage(int box, int index, int state)
+void LEDStrip::SendMessage()
 {
-    unsigned short message[4];
-    message[0] = box;
-    message[1] = index;
-    message[2] = state;
-    message[3] = Crc16((unsigned char*)&message,6);
-
     serial->clear();
     serial->flush();
     serial->write((char*)&message,sizeof(message));
-
-    char v[4];
-    v[0] = 23;
-    serial->write(v,4);
+    qDebug() << "SEND " << TryCount;
 }
-
+//-------------------------------------------------------------------
+void LEDStrip::SendTimeout()
+{
+    SendMessage();
+    qDebug() << "SEND Timer";
+    TryCount++;
+    if(TryCount >= 3)
+    {
+        TryCount = 0;
+        sendTimer->stop();
+    }
+}
+//-------------------------------------------------------------------
 void LEDStrip::SerialReadyRead()
 {
     // read
     QByteArray serial_buffer = serial->readAll();
+
+    if(serial_buffer.toStdString() == "OK") sendTimer->stop();
     qDebug() << serial_buffer;
 }
 
 void LEDStrip::ledON(int box, int id)
 {
-    SendMessage(box, id, 1);
+    message[0] = box;
+    message[1] = id;
+    message[2] = 1;
+    message[3] = Crc16((unsigned char*)&message,6);
+    SendMessage();
+
+    TryCount = 0;
+    sendTimer->start(200);
+    qDebug() << "led on " << message[0] << message[1];
 }
 
 void LEDStrip::ledOFF(int box, int id)
 {
-    SendMessage(box, id, 0);
+    message[0] = box;
+    message[1] = id;
+    message[2] = 0;
+    message[3] = Crc16((unsigned char*)&message,6);
+    SendMessage();
+
+    TryCount = 0;
+    sendTimer->start(200);
+    qDebug() << "led off";
 }
+
