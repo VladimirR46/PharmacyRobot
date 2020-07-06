@@ -27,6 +27,7 @@ SOURCES += \
     cellsettingswindow.cpp \
     database.cpp \
     jogwindow.cpp \
+    ledstrip.cpp \
     main.cpp \
     mainwindow.cpp \
     restockingwindow.cpp \
@@ -40,6 +41,7 @@ HEADERS += \
     cellsettingswindow.h \
     database.h \
     jogwindow.h \
+    ledstrip.h \
     mainwindow.h \
     restockingwindow.h \
     servoline.h \

@@ -65,6 +65,8 @@ public:
 
         int dTimeOpenClose = 400;
         int dTimeUpDown = 400;
+
+        int LEDPort = 10;
     };
     explicit SettingsWindow(QWidget *parent = nullptr);
     ~SettingsWindow();
@@ -89,6 +91,8 @@ signals:
         void  WriteModbusSignal(int Server, int RegistrAddres, quint16 value);
         void  ReadModbusSignal(int Server, int RegistrAddres, quint16 size); // Прочитать N регистров
         void  GetCurrentPosSignal(QWidget* X, QWidget* Y);
+        void  ledONSignal(int box, int id);
+        void  ledOFFSignal(int box, int id);
 
 
 private slots:

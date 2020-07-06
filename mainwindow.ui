@@ -60,6 +60,7 @@
     <addaction name="separator"/>
     <addaction name="actionConnectCart"/>
     <addaction name="actionConnectTCP"/>
+    <addaction name="actionConnectLED"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menu_3">
@@ -166,6 +167,11 @@
   <action name="actionConnectCart">
    <property name="text">
     <string>Подключить корзину</string>
+   </property>
+  </action>
+  <action name="actionConnectLED">
+   <property name="text">
+    <string>Подключить LED</string>
    </property>
   </action>
  </widget>

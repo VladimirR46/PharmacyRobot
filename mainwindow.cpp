@@ -58,6 +58,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     p_CartDrugs = new CartDrugs(m_settingsWindow, this);
 
+    p_LedStrip = new LEDStrip(m_settingsWindow);
+    connect(m_settingsWindow, &SettingsWindow::ledONSignal, p_LedStrip, &LEDStrip::ledON);
+    connect(m_settingsWindow, &SettingsWindow::ledOFFSignal, p_LedStrip, &LEDStrip::ledOFF);
+
     initActions();
 }
 //-------------------------------------------------------------------------------------------------------------
@@ -252,6 +256,8 @@ void MainWindow::initActions()
     });
 
     connect(ui->actionJOG, &QAction::triggered, m_jogWindow, &QDialog::show);
+
+    connect(ui->actionConnectLED, &QAction::triggered, p_LedStrip, &LEDStrip::Connect);
 }
 //---------------------------------------------------------------------------------------------------------------------
 int MainWindow::GetEncoderFeedback(const QModbusDataUnit& unit)

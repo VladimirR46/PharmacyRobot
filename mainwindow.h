@@ -9,6 +9,7 @@
 #include <QTime>
 #include "database.h"
 #include "cartdrugs.h"
+#include "ledstrip.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -122,6 +123,7 @@ private:
 
     TcpClient* p_TcpClient;
     CartDrugs* p_CartDrugs;
+    LEDStrip* p_LedStrip;
 
     SettingsWindow *m_settingsWindow;
     JOGWindow *m_jogWindow;

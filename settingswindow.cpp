@@ -351,6 +351,8 @@ void SettingsWindow::SaveSettingsToStruct()
     m_settings.dTimeUpDown = ui->spinTimeUpDown->value();
     m_settings.dTimeOpenClose = ui->spinTimeOpenClose->value();
 
+    m_settings.LEDPort = ui->spinLEDPort->value();
+
     m_settings.CartPort = ui->spinCartPort->value();
 }
 
@@ -411,6 +413,8 @@ void SettingsWindow::saveSettings()
     p_settings->setValue("dTimeUpDown",ui->spinTimeUpDown->value());
     p_settings->setValue("dTimeOpenClose",ui->spinTimeOpenClose->value());
 
+    p_settings->setValue("LEDPin",ui->spinLEDPort->value());
+
     SaveSettingsToStruct();
 
     // Сохраняем базу данных
@@ -446,6 +450,8 @@ void SettingsWindow::loadSettings()
 
     ui->spinTimeUpDown->setValue(p_settings->value("dTimeUpDown").toInt());
     ui->spinTimeOpenClose->setValue(p_settings->value("dTimeOpenClose").toInt());
+
+    ui->spinLEDPort->setValue(p_settings->value("LEDPin").toInt());
 
     SaveSettingsToStruct();
 
@@ -514,6 +520,30 @@ void SettingsWindow::ClickCupboard(int row,int col)
 //--------------------------------------------------------------------------------
 void SettingsWindow::ClickBuyed(int row, int col)
 {
+    // Определяем id светодиода
+    int box = p_tableBuyed->item(row,0)->text().toInt()-1;
+    int line = p_tableBuyed->item(row,1)->text().toInt()-1;
+    int cell = p_tableBuyed->item(row,2)->text().toInt()-1;
+
+    int id = -1;
+    int count = 0;
+    for(int i = 0; i < line; i++)
+    {
+        QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box]->cellWidget(i,1));
+        if(tw) count += tw->columnCount();
+    }
+
+    if(line % 2 == 0) id = count + cell+1;
+    else
+    {
+        QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box]->cellWidget(line,1));
+        if(tw)
+        {
+            id = count + (tw->columnCount() - cell);
+        }
+    }
+
+    emit ledONSignal(box, id);
     m_RestockWindow->ShowRestock(row, p_tableBuyed->item(row,6)->text().toInt());
 }
 //----------------------------------------------------------------------
