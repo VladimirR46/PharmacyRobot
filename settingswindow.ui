@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>652</width>
+    <width>737</width>
     <height>423</height>
    </rect>
   </property>
@@ -52,7 +52,7 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>150</width>
+         <width>190</width>
          <height>16777215</height>
         </size>
        </property>
@@ -145,7 +145,7 @@
             <enum>QTabWidget::North</enum>
            </property>
            <property name="currentIndex">
-            <number>3</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
@@ -362,7 +362,7 @@
                <x>10</x>
                <y>10</y>
                <width>165</width>
-               <height>48</height>
+               <height>53</height>
               </rect>
              </property>
              <layout class="QFormLayout" name="formLayout">
@@ -409,8 +409,8 @@
               <rect>
                <x>21</x>
                <y>11</y>
-               <width>101</width>
-               <height>22</height>
+               <width>111</width>
+               <height>24</height>
               </rect>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -435,13 +435,13 @@
             <attribute name="title">
              <string>LED Индикация</string>
             </attribute>
-            <widget class="QWidget" name="">
+            <widget class="QWidget" name="layoutWidget">
              <property name="geometry">
               <rect>
                <x>10</x>
                <y>10</y>
-               <width>65</width>
-               <height>22</height>
+               <width>79</width>
+               <height>24</height>
               </rect>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -722,8 +722,8 @@
              <rect>
               <x>10</x>
               <y>21</y>
-              <width>214</width>
-              <height>74</height>
+              <width>244</width>
+              <height>82</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_4">
@@ -792,8 +792,8 @@
              <rect>
               <x>11</x>
               <y>21</y>
-              <width>212</width>
-              <height>74</height>
+              <width>244</width>
+              <height>82</height>
              </rect>
             </property>
             <layout class="QFormLayout" name="formLayout_5">
