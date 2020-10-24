@@ -18,9 +18,12 @@ public:
     unsigned short message[4];
     void SendMessage();
 
+    ~LEDStrip();
+
 
 public slots:
     bool Connect();
+    void Disconnect();
     void SerialReadyRead();
     void ledON(int box, int id);
     void ledOFF(int box, int id);

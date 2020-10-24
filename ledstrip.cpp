@@ -43,6 +43,16 @@ bool LEDStrip::Connect()
     else return false;
 }
 
+void LEDStrip::Disconnect()
+{
+    serial->close();
+}
+
+LEDStrip::~LEDStrip()
+{
+    Disconnect();
+}
+
 void LEDStrip::SendMessage()
 {
     serial->clear();
