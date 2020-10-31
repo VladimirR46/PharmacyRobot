@@ -61,6 +61,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_settingsWindow, &SettingsWindow::ledONSignal, p_LedStrip, &LEDStrip::ledON);
     connect(m_settingsWindow->m_RestockWindow, &RestockingWindow::ledOFFSignal, p_LedStrip, &LEDStrip::ledOFF);
 
+    connect(p_CartDrugs, &CartDrugs::CartDrugsConnectedSignal, this, &MainWindow::CartDrugsConnected);
+
     initActions();
 }
 //-------------------------------------------------------------------------------------------------------------
@@ -627,4 +629,10 @@ void MainWindow::SetBit(quint16 &value, quint8 bit, quint8 index)
 void MainWindow::on_pushButton_clicked()
 {
     p_TcpClient->SendServerResponse();
+}
+
+void MainWindow::CartDrugsConnected()
+{
+    ui->actionConnectCart->setEnabled(false);
+    statusBar()->showMessage(tr("Cart Drugs успешно подключена"), 5000);
 }

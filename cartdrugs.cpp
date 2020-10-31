@@ -4,7 +4,6 @@ CartDrugs::CartDrugs(SettingsWindow *settingsWindow, QObject *parent) : QObject(
 {
     p_settingsWindow = settingsWindow;
 
-
     GatherTimer = new QTimer();
     connect(GatherTimer, SIGNAL(timeout()), this, SLOT(GatherTimeout()));
 
@@ -308,7 +307,7 @@ void CartDrugs::ConnectCart()
         port = openPort(portName.toStdString().c_str(), baudRate);
         if (port == INVALID_HANDLE_VALUE) return;
         qDebug() << "CartDrugs connected";
-
+        emit CartDrugsConnectedSignal();
 }
 
 void CartDrugs::DisconnectCart()

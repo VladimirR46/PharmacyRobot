@@ -39,6 +39,9 @@ public slots:
     void GatherTimeout();
     void DropTimeout();
 
+signals:
+        void CartDrugsConnectedSignal();
+
 private:
     HANDLE port;
     QString portName;

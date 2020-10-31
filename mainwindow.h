@@ -118,6 +118,8 @@ private slots:
     void ServoInitialization();
     void on_pushButton_clicked();
 
+    void CartDrugsConnected();
+
 private:
     Ui::MainWindow *ui;
 
