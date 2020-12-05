@@ -124,6 +124,20 @@ bool DataBase::GetCell(Cell& cell, int productcode)
     return false;
 }
 
+bool DataBase::RemoveCell(Cell& cell)
+{
+    model->setFilter("box="+QString::number(cell.Box)+" AND line="+QString::number(cell.Line)+" AND cell="+QString::number(cell.Cell));
+    if(!model->select()) return false;
+
+    if(model->rowCount() == 1)
+    {
+        model->removeRows(0,1);
+        if(model->submitAll())
+            return true;
+    }
+    return false;
+}
+
 bool DataBase::SetCell(DataBase::Cell &cell)
 {
     model->setFilter("box="+QString::number(cell.Box)+" AND line="+QString::number(cell.Line)+" AND cell="+QString::number(cell.Cell));

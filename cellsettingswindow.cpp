@@ -50,3 +50,9 @@ void CellSettingsWindow::on_CurrPosButton_clicked()
 {
     emit GetCurrentPosSignal(ui->spinX, ui->spinY);
 }
+
+void CellSettingsWindow::on_DeleteButton_clicked()
+{
+    emit DeleteCell(cell);
+    hide();
+}

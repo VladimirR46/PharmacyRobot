@@ -13,6 +13,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     ui(new Ui::SettingsWindow)
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::Window | Qt::WindowMaximizeButtonHint  | Qt::WindowCloseButtonHint);
 
     p_settings = new QSettings();
     m_cellSettingsWindow =  new CellSettingsWindow();
@@ -21,6 +22,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     connect(m_RestockWindow, &RestockingWindow::RestockCellSignal, this, &SettingsWindow::RestockedCell);
 
     connect(m_cellSettingsWindow, &CellSettingsWindow::SaveCellConfig, this, &SettingsWindow::SaveCellConfigSlot);
+    connect(m_cellSettingsWindow, &CellSettingsWindow::DeleteCell, this, &SettingsWindow::DeleteCellSlot);
 
     connect(ui->SettingsList,SIGNAL(currentRowChanged(int)),ui->stackedSettings,SLOT(setCurrentIndex(int)));
     connect(ui->SettingsList,SIGNAL(currentTextChanged(QString)),ui->label_8,SLOT(setText(QString)));
@@ -296,6 +298,18 @@ void SettingsWindow::SaveCellConfigSlot(DataBase::Cell& cell)
 
 }
 //-------------------------------------------------------------------------------------------------------------------
+void SettingsWindow::DeleteCellSlot(DataBase::Cell& cell)
+{
+    QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[cell.Box]->cellWidget(cell.Line,1));
+
+    if(tw && (tw->columnCount() == cell.Cell+1))
+    {
+        database.RemoveCell(cell);
+        delete tw->takeItem(0,cell.Cell);
+        tw->setColumnCount(tw->columnCount()-1);
+    }
+}
+//-------------------------------------------------------------------------------------------------------------------
 SettingsWindow::Settings SettingsWindow::settings() const
 {
     return m_settings;
@@ -527,13 +541,15 @@ void SettingsWindow::ClickBuyed(int row, int col)
 
     int id = -1;
     int count = 0;
-    for(int i = 0; i < line; i++)
+
+    for(int i = tableCupboard[box]->rowCount(); i > line; i--)
     {
         QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box]->cellWidget(i,1));
         if(tw) count += tw->columnCount();
     }
 
-    if(line % 2 == 0) id = count + cell+1;
+
+    if((tableCupboard[box]->rowCount() - line - 1) % 2 == 0) id = count + cell+1;
     else
     {
         QTableWidget* tw = static_cast<QTableWidget *>(tableCupboard[box]->cellWidget(line,1));

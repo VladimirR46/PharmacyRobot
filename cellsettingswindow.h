@@ -24,8 +24,11 @@ private slots:
 
     void on_CurrPosButton_clicked();
 
+    void on_DeleteButton_clicked();
+
 signals:
     void  SaveCellConfig(DataBase::Cell& cell);
+    void  DeleteCell(DataBase::Cell& cell);
     void  GetCurrentPosSignal(QWidget* X, QWidget* Y);
 
 

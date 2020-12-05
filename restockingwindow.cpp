@@ -22,6 +22,7 @@ void RestockingWindow::ShowRestock(int row, int count, int box, int led_id)
    this->led_id = led_id;
    CurrentRow = row;
    ui->spinBox->setValue(count);
+   setWindowModality(Qt::ApplicationModal);
    show();
 }
 

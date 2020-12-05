@@ -39,6 +39,7 @@ public:
     bool GetCell(Cell& cell);
     bool GetCell(Cell& cell, int productcode);
     bool SetCell(Cell& cell);
+    bool RemoveCell(Cell& cell);
 
     bool SetCellProductCount(int count, int productcode);
 

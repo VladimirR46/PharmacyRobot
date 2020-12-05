@@ -100,6 +100,7 @@ private slots:
     void RestockedCell(int row, int count);
 
     void SaveCellConfigSlot(DataBase::Cell& cell);
+    void DeleteCellSlot(DataBase::Cell& cell);
     void on_ButtonReadAll_clicked();
 
     void Click(int col,int row);

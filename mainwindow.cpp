@@ -258,7 +258,13 @@ void MainWindow::initActions()
 
     connect(ui->actionJOG, &QAction::triggered, m_jogWindow, &QDialog::show);
 
-    connect(ui->actionConnectLED, &QAction::triggered, p_LedStrip, &LEDStrip::Connect);
+    //connect(ui->actionConnectLED, &QAction::triggered, p_LedStrip, &LEDStrip::Connect);
+    connect(ui->actionConnectLED, &QAction::triggered, [this]() {
+        if(p_LedStrip->Connect())
+        {
+            ui->actionConnectLED->setEnabled(false);
+        }
+    });
 }
 //---------------------------------------------------------------------------------------------------------------------
 int MainWindow::GetEncoderFeedback(const QModbusDataUnit& unit)
