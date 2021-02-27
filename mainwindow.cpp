@@ -341,6 +341,7 @@ void MainWindow::Check_dP13(int ServoAddres, quint16 value)
         {
             ui->actionSHome->setEnabled(true);
             timerIsHome->stop();
+            //MovePoint(500,500);
         }
     }
     else FindServo(ServoAddres)->isHome = false;
